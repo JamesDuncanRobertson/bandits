@@ -134,7 +134,7 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    padding: 120px 22px 40px;
+    padding: 40px 22px 40px;
     overflow-y: auto;
   }
   .info-overlay.show { display: flex; }
@@ -1054,6 +1054,7 @@ function resetGame() {
   state = { you: 0, youVault: 0, m: 0, mVault: 0, loot: INIT_LOOT, round: 1, locked: false };
   mLastAct = null;
   mLastLastAct = null;
+  mittensStart();
   document.getElementById('winner-overlay').classList.remove('show');
   document.getElementById('log').innerHTML = '';
   ['you-amount','m-amount','loot-amount'].forEach(id => {
@@ -1779,6 +1780,12 @@ function play(youAct) {
 }
 
 function resolveAndAnimate(youAct, mAct) {
+  // Mittens: snapshot pre-resolve state + both actions for training data.
+  mittensLog(
+    youAct, mAct,
+    { you: state.you, youVault: state.youVault, m: state.m, mVault: state.mVault, loot: state.loot },
+    gameMode === 'friend' ? (isHost ? 'you' : 'm') : 'you'
+  );
   const stages = resolve(youAct, mAct);
   const STAGE_MS = 280;
 
@@ -1939,6 +1946,7 @@ function addLog(round, youAct, mAct, stages) {
 }
 
 function endGame(winner, youAct, mAct, stages) {
+  mittensFinish(winner);
   document.getElementById('winner-eyebrow').textContent = `Night ${state.round}`;
   document.getElementById('winner-title').textContent = winner === 'you' ? 'You Win' : 'You Lose';
 
@@ -1994,6 +2002,50 @@ const _sb = (_sbConfigured && typeof window.supabase !== 'undefined')
     })
   : null;
 
+// ── Mittens telemetry ──────────────────────────────────────────────────
+// Logs per-turn (state, both actions, winner) to Supabase for later use as
+// training data. Anonymous client UUID, no PII.
+let mittensClientId = localStorage.getItem('mittens-client-id');
+if (!mittensClientId) {
+  mittensClientId = crypto.randomUUID();
+  localStorage.setItem('mittens-client-id', mittensClientId);
+}
+let mittensGameId = null;
+let mittensTurn = 0;
+
+function mittensStart() {
+  if (!_sb) { mittensGameId = null; return; }
+  mittensGameId = crypto.randomUUID();
+  mittensTurn = 0;
+}
+
+function mittensLog(youAct, mAct, snap, humanSide) {
+  if (!mittensGameId || !_sb) return;
+  mittensTurn += 1;
+  _sb.from('bandits_turns').insert({
+    game_id: mittensGameId,
+    turn: mittensTurn,
+    you_hand: snap.you, you_vault: snap.youVault,
+    m_hand: snap.m,    m_vault: snap.mVault,
+    loot: snap.loot,
+    you_action: youAct, m_action: mAct,
+    human_side: humanSide,
+    ai_difficulty: gameMode === 'machine' ? aiDifficulty : null,
+    game_mode: gameMode || 'machine',
+    client_id: mittensClientId,
+  }).then(() => {}, () => {});
+}
+
+function mittensFinish(winner) {
+  if (!mittensGameId || !_sb) return;
+  _sb.from('bandits_turns')
+    .update({ winner })
+    .eq('game_id', mittensGameId)
+    .eq('turn', mittensTurn)
+    .then(() => {}, () => {});
+  mittensGameId = null;
+}
+
 function genRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
   let s = '';
@@ -2012,6 +2064,16 @@ function showView(id) {
 let aiDifficulty = 'hard';
 
 function toggleMachineMenu() {
+  // If the rolling tile currently shows a difficulty name (because the user
+  // tapped/hovered a dot), treat the tile click as a launch instead of a toggle.
+  const roll = document.getElementById('machine-tile-roll');
+  const current = roll && roll.querySelector('.tile-row:not(.exit)');
+  const text = current ? current.textContent.trim() : '';
+  const NAME_TO_DIFF = { 'Simple':'random', 'Taxing':'easy', 'Troublesome':'medium', 'Impossible':'hard' };
+  if (NAME_TO_DIFF[text]) {
+    startMachine(NAME_TO_DIFF[text]);
+    return;
+  }
   document.getElementById('menu-tiles').classList.toggle('expanded');
 }
 
