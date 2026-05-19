@@ -600,6 +600,7 @@
     background: rgba(245,245,240,0.04);
     border-color: rgba(245,245,240,0.3);
   }
+  .winner-btn .tile-roll { height: 12px; }
 
   /* ── Narrow screens ──────────────────────────────────────────────────── */
   @media (max-width: 360px) {
@@ -855,7 +856,7 @@
 <!-- ───────── Mode select ───────── -->
 <div class="menu-view" id="mode-view">
   <div class="menu-tiles" id="menu-tiles">
-    <button class="menu-tile" onclick="toggleMachineMenu()"><span class="tile-roll" id="machine-tile-roll"><span class="tile-row latest">Play Machine</span></span></button>
+    <button class="menu-tile" onclick="toggleMachineMenu()"><span class="tile-roll" id="machine-tile-roll" data-default="Play Machine"><span class="tile-row latest">Play Machine</span></span></button>
     <div class="diff-dots" role="group" aria-label="Difficulty">
       <button class="diff-dot" data-name="Simple"      onclick="startMachine('random')" aria-label="Simple"></button>
       <button class="diff-dot" data-name="Taxing"      onclick="startMachine('easy')"   aria-label="Taxing"></button>
@@ -952,7 +953,7 @@
     <button class="diff-dot" data-name="Troublesome" onclick="playAgainAt('medium')" aria-label="Troublesome"></button>
     <button class="diff-dot" data-name="Impossible"  onclick="playAgainAt('hard')"   aria-label="Impossible"></button>
   </div>
-  <button class="winner-btn" id="winner-btn" onclick="playAgain()">Play again</button>
+  <button class="winner-btn" id="winner-btn" onclick="playAgain()"><span class="tile-roll" id="winner-tile-roll" data-default="Play again"><span class="tile-row latest">Play again</span></span></button>
 </div>
 
 </div> <!-- end #game-view -->
@@ -1779,7 +1780,7 @@ function endGame(winner, youAct, mAct, stages) {
   const btnEl  = document.getElementById('winner-btn');
   if (gameMode === 'machine') {
     dotsEl.classList.remove('hidden');
-    btnEl.classList.add('hidden');
+    btnEl.classList.remove('hidden');
   } else {
     dotsEl.classList.add('hidden');
     btnEl.classList.remove('hidden');
@@ -2030,11 +2031,10 @@ function doReset() {
   resetGame();
 }
 
-// Roll text inside the Play Machine tile (log-style vertical animation).
-function rollMachineTile(text) {
-  const container = document.getElementById('machine-tile-roll');
-  if (!container) return;
-  const current = container.querySelector('.tile-row:not(.exit)');
+// Roll text inside a tile-roll element (log-style vertical animation).
+function rollTile(rollEl, text) {
+  if (!rollEl) return;
+  const current = rollEl.querySelector('.tile-row:not(.exit)');
   if (current && current.textContent === text) return;
   if (current) {
     current.classList.remove('latest');
@@ -2044,11 +2044,18 @@ function rollMachineTile(text) {
   const row = document.createElement('span');
   row.className = 'tile-row latest enter-from';
   row.textContent = text;
-  container.appendChild(row);
+  rollEl.appendChild(row);
   requestAnimationFrame(() => requestAnimationFrame(() => row.classList.remove('enter-from')));
 }
-// Desktop: hover previews the name. Touch: first tap previews, second tap on
-// the same dot launches. Different dot resets the preview.
+function rollDefault(rollEl) { if (rollEl) rollTile(rollEl, rollEl.dataset.default); }
+function getTileRollFor(dot) {
+  const container = dot.closest('.diff-dots, .winner-dots');
+  if (!container) return null;
+  return container.classList.contains('diff-dots')
+    ? document.getElementById('machine-tile-roll')
+    : document.getElementById('winner-tile-roll');
+}
+// Desktop: hover previews. Touch: first tap previews, second tap launches.
 const isTouchDevice = matchMedia('(hover: none)').matches;
 let armedDot = null;
 let armedTimer = null;
@@ -2056,22 +2063,24 @@ function disarm() {
   armedDot = null;
   if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
 }
-document.querySelectorAll('.diff-dots .diff-dot').forEach(dot => {
-  dot.addEventListener('mouseenter', () => rollMachineTile(dot.dataset.name));
-  dot.addEventListener('mouseleave', () => { if (!isTouchDevice) rollMachineTile('Play Machine'); });
+document.querySelectorAll('.diff-dot').forEach(dot => {
+  const tileRoll = getTileRollFor(dot);
+  if (!tileRoll) return;
+  dot.addEventListener('mouseenter', () => rollTile(tileRoll, dot.dataset.name));
+  dot.addEventListener('mouseleave', () => { if (!isTouchDevice) rollDefault(tileRoll); });
   if (isTouchDevice) {
     dot.addEventListener('click', (e) => {
-      if (armedDot === dot) { disarm(); return; }   // second tap → let launch through
+      if (armedDot === dot) { disarm(); return; }
       e.stopImmediatePropagation();
       e.preventDefault();
-      rollMachineTile(dot.dataset.name);
+      rollTile(tileRoll, dot.dataset.name);
       armedDot = dot;
       if (armedTimer) clearTimeout(armedTimer);
       armedTimer = setTimeout(() => {
-        if (armedDot === dot) { armedDot = null; rollMachineTile('Play Machine'); }
+        if (armedDot === dot) { armedDot = null; rollDefault(tileRoll); }
         armedTimer = null;
       }, 3000);
-    }, true); // capture phase, fires before the inline onclick
+    }, true);
   }
 });
 
