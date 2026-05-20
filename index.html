@@ -996,7 +996,7 @@
         <div class="row"><div class="row-name">Steal</div><div class="row-desc">Transfers the loot to your hand.</div></div>
         <div class="row"><div class="row-name">Raid</div><div class="row-desc">Transfers your partner's hand to your hand.</div></div>
         <div class="row"><div class="row-name">Rob</div><div class="row-desc">Adds $1,000 to your hand.</div></div>
-        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Transfer the treasure to the loot.</div></div>
+        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand.</div></div>
         <div class="row"><div class="row-name">Stash</div><div class="row-desc">Buries your hand. Buried treasure is safe from Raid &amp; Ambush.</div></div>
         <div class="row"><div class="row-name">Dig</div><div class="row-desc">Unearths buried treasure to your hand.</div></div>
         <div class="row"><div class="row-name">Guard</div><div class="row-desc">Defends against Steal. Two Guards split the loot.</div></div>
@@ -1290,7 +1290,7 @@ function isLegalRational(act) {
     case 'RAID':   return state.you > 0;   // vault is safe from raid
     case 'STEAL':  return true;  // opp may ADD-seed/double loot this same turn
     case 'GUARD':  return state.loot > 0;
-    case 'AMBUSH': return state.you > 0;  // catch yields opp's hand; nothing to catch if opp hand = 0
+    case 'AMBUSH': return state.you > 0;  // catches attacker's hand (raider or spy)
     case 'ROB':    return true;
     case 'ADD':    return true;
     default:       return true;
@@ -1374,32 +1374,30 @@ function pureResolve(s, youAct, mAct) {
     mStashAmt = m; mVault += m; m = 0;
     const w = term(); if (w) return w;
   }
-  // 3. DIG — win check DEFERRED past SPY phase so SPY can intercept a DIG-to-win.
+  // 3. DIG — win check fires immediately; SPY cannot intercept a winning DIG.
   if (youAct === 'DIG') {
     youDigAmt = youVault; you += youVault; youVault = 0;
+    const w = term(); if (w) return w;
   }
   if (mAct === 'DIG') {
     mDigAmt = mVault; m += mVault; mVault = 0;
+    const w = term(); if (w) return w;
   }
-  // 4. SPY phase — catches STASH/DIG to loot. AMBUSH still catches SPY.
+  // 4. SPY phase — catches transfer to spy's hand (STASH and DIG both).
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
     m += you; you = 0; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
     you += m; m = 0; const w = term(); if (w) return w;
   } else if (youAct === 'SPY' && mAct === 'STASH') {
-    mVault -= mStashAmt; loot += mStashAmt;
+    mVault -= mStashAmt; you += mStashAmt; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'STASH') {
-    youVault -= youStashAmt; loot += youStashAmt;
+    youVault -= youStashAmt; m += youStashAmt; const w = term(); if (w) return w;
   } else if (youAct === 'SPY' && mAct === 'DIG') {
-    m -= mDigAmt; loot += mDigAmt;
+    m -= mDigAmt; you += mDigAmt; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'DIG') {
-    you -= youDigAmt; loot += youDigAmt;
+    you -= youDigAmt; m += youDigAmt; const w = term(); if (w) return w;
   }
   // SPY-vs-anything-else: whiffs.
-  // 4b. Deferred DIG win check
-  if (youAct === 'DIG' || mAct === 'DIG') {
-    const w = term(); if (w) return w;
-  }
   // 5. ROB
   if (youAct === 'ROB') { you += 1000; const w = term(); if (w) return w; }
   if (mAct   === 'ROB') { m += 1000; const w = term(); if (w) return w; }
@@ -1565,7 +1563,7 @@ function partnerDecide() {
   if (state.m       === 0) probs[1] = 0;   // STASH: nothing in hand
   if (state.mVault  === 0) probs[2] = 0;   // DIG: nothing in vault
   if (state.you === 0 && state.youVault === 0) probs[3] = 0;   // SPY
-  if (state.you === 0) probs[5] = 0;        // AMBUSH
+  if (state.you === 0) probs[5] = 0;        // AMBUSH: catches attacker's hand
   if (state.loot === 0) probs[6] = 0;       // GUARD
   if (state.you === 0) probs[7] = 0;        // RAID: vault is safe — only hand matters
 
@@ -1618,12 +1616,6 @@ function resolve(youAct, mAct) {
     return you !== m;  // both over: decisive only if hands differ
   };
 
-  // Pushes a stage WITHOUT triggering the win check. Used for DIG so SPY in the
-  // following phase has a chance to intercept a DIG-to-win.
-  const pushNoCheck = (label, player, extra) => {
-    stages.push({ you, youVault, m, mVault, loot, label, player, ...(extra || {}) });
-  };
-
   // 1. ADD — seed $1K if pot is empty, otherwise double.
   if (youAct === 'ADD') {
     loot = (loot === 0) ? 1000 : loot * 2;
@@ -1647,25 +1639,23 @@ function resolve(youAct, mAct) {
   }
 
   // 3. DIG (vault → hand). Win check DEFERRED past SPY phase so SPY can intercept
-  // a DIG-to-win. The hand changes immediately for the animation; if SPY catches,
-  // the SPY phase will subtract the dug amount back out.
+  // 3. DIG (vault → hand). Win check fires immediately — SPY cannot intercept a winning DIG.
   if (youAct === 'DIG') {
     youDigAmt = youVault;
     you += youVault; youVault = 0;
-    pushNoCheck('DIG', 'you');
+    if (push('DIG', 'you')) return stages;
   }
   if (mAct === 'DIG') {
     mDigAmt = mVault;
     m += mVault; mVault = 0;
-    pushNoCheck('DIG', 'm');
+    if (push('DIG', 'm')) return stages;
   }
 
-  // 4. SPY phase — catches STASH or DIG; intercepted treasure → loot.
-  //    SPY-vs-AMBUSH: AMBUSH catches the spy; takes spy's hand.
-  //    SPY-vs-STASH:  spy intercepts the deposit; vault -= stashed, loot += stashed.
-  //    SPY-vs-DIG:    spy intercepts the retrieval; hand -= dug, loot += dug.
-  //                   (Undoes the deferred DIG hand-pull-up before any win check.)
-  //    SPY-vs-anything-else (incl. SPY-vs-SPY, SPY-vs-RAID): SPY whiffs.
+  // 4. SPY phase — catches the in-flight transfer, takes it to spy's hand.
+  //    SPY-vs-STASH:  buried amount → spy's hand.
+  //    SPY-vs-DIG:    dug amount → spy's hand.
+  //    SPY-vs-AMBUSH: AMBUSH beats & robs the spy's hand.
+  //    SPY-vs-anything-else (SPY-vs-SPY, SPY-vs-RAID, SPY-vs-ROB, etc.): SPY whiffs.
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
     m += you; you = 0;
     if (push('AMBUSH_CONFISCATE', 'm')) return stages;
@@ -1673,30 +1663,19 @@ function resolve(youAct, mAct) {
     you += m; m = 0;
     if (push('AMBUSH_CONFISCATE', 'you')) return stages;
   } else if (youAct === 'SPY' && mAct === 'STASH') {
-    mVault -= mStashAmt; loot += mStashAmt;
+    mVault -= mStashAmt; you += mStashAmt;
     if (push('SPY_INTERCEPT', 'you', { caught: mStashAmt, target: 'STASH' })) return stages;
   } else if (mAct === 'SPY' && youAct === 'STASH') {
-    youVault -= youStashAmt; loot += youStashAmt;
+    youVault -= youStashAmt; m += youStashAmt;
     if (push('SPY_INTERCEPT', 'm', { caught: youStashAmt, target: 'STASH' })) return stages;
   } else if (youAct === 'SPY' && mAct === 'DIG') {
-    m -= mDigAmt; loot += mDigAmt;
+    m -= mDigAmt; you += mDigAmt;
     if (push('SPY_INTERCEPT', 'you', { caught: mDigAmt, target: 'DIG' })) return stages;
   } else if (mAct === 'SPY' && youAct === 'DIG') {
-    you -= youDigAmt; loot += youDigAmt;
+    you -= youDigAmt; m += youDigAmt;
     if (push('SPY_INTERCEPT', 'm', { caught: youDigAmt, target: 'DIG' })) return stages;
   }
   // else: SPY whiffs entirely. No stage entry.
-
-  // 4b. Deferred DIG win check — fires only if a DIG happened AND wasn't intercepted.
-  // (If SPY caught the DIG, the hand was already restored to its pre-DIG value above
-  // and this check finds nothing over GOAL from the DIG alone.)
-  if (youAct === 'DIG' || mAct === 'DIG') {
-    const youOver = you >= GOAL;
-    const mOver   = m   >= GOAL;
-    if ((youOver && !mOver) || (mOver && !youOver) || (youOver && mOver && you !== m)) {
-      return stages;
-    }
-  }
 
   // 5. ROB — +$1K to hand. Away from home; vault is exposed in the RAID phase below.
   if (youAct === 'ROB') {
@@ -1921,13 +1900,13 @@ function roundDescription(youAct, mAct, stages) {
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
     base = 'Your partner attempted to spy on you · You beat him and robbed him.';
   } else if (youIntercept && youIntercept.target === 'STASH') {
-    base = 'Your partner tried to bury treasure · You caught him, and forced him to return it to the loot.';
+    base = 'You caught your partner burying treasure · When his back was turned, you made off with it.';
   } else if (youIntercept && youIntercept.target === 'DIG') {
-    base = 'Your partner dug up his treasure · You caught him, and forced him to return it to the loot.';
+    base = 'You caught your partner digging up treasure · When his back was turned, you made off with it.';
   } else if (mIntercept && mIntercept.target === 'STASH') {
-    base = 'You tried to bury treasure · Your partner caught you, and forced you to return it to the loot.';
+    base = 'Your partner caught you burying treasure · When your back was turned, he made off with it.';
   } else if (mIntercept && mIntercept.target === 'DIG') {
-    base = 'You dug up your treasure · Your partner caught you, and forced you to return it to the loot.';
+    base = 'Your partner caught you digging up treasure · When your back was turned, he made off with it.';
   } else if (youAct === 'RAID' && mAct === 'STASH') {
     base = 'You attempted to raid your partner, but he buried his wealth.';
   } else if (mAct === 'RAID' && youAct === 'STASH') {
