@@ -1,0 +1,23 @@
+{
+  "name": "bandits",
+  "version": "1.0.0",
+  "description": "First to $20K in hand. A 2-player heist.",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JamesDuncanRobertson/bandits.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JamesDuncanRobertson/bandits/issues"
+  },
+  "homepage": "https://github.com/JamesDuncanRobertson/bandits#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
