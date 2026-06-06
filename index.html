@@ -42,40 +42,12 @@
       --overlay-15: rgba(245,245,240,0.15);
       --overlay-30: rgba(245,245,240,0.30);
     }
-    [data-theme="light"] {
-      --bg: #f0e8d6;
-      --bg-active: #e6dcc6;
-      --text-bright: #000000;
-      --text: #1a1612;
-      --text-2: #3a342c;
-      --text-3: #4a443a;
-      --text-4: #5a544a;
-      --text-5: #5a544a;
-      --text-6: #6a6458;
-      --text-mute: #7a7468;
-      --text-dim: #8a8478;
-      --text-arrow: #9a9488;
-      --text-fade: #a8a294;
-      --text-faint: #b0aa9c;
-      --text-disabled: #a8a294;
-      --warn: #b04a4a;
-      --bg-modal: rgba(240,232,214,0.97);
-      --overlay-04: rgba(26,22,18,0.03);
-      --overlay-06: rgba(26,22,18,0.05);
-      --overlay-08: rgba(26,22,18,0.07);
-      --overlay-10: rgba(26,22,18,0.08);
-      --overlay-12: rgba(26,22,18,0.10);
-      --overlay-14: rgba(26,22,18,0.12);
-      --overlay-15: rgba(26,22,18,0.13);
-      --overlay-30: rgba(26,22,18,0.30);
-    }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { overflow-x: hidden; overscroll-behavior: none; }
   body {
     background: var(--bg);
     color: var(--text);
-    transition: background-color 0.28s ease, color 0.28s ease;
     font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     min-height: 100vh;
     min-height: 100dvh;
@@ -95,18 +67,22 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 28px;
-    padding: 24px 4px 8px;
-    text-align: center;
+    gap: 8px;
+    padding: 40px 22px 8px;
   }
   body.tut-intro-mode .hands,
   body.tut-intro-mode .loot-row,
   body.tut-intro-mode .action-zone { display: none; }
   .tutorial-intro-body {
-    font-size: 15px;
-    line-height: 1.65;
-    color: var(--text-2);
-    max-width: 340px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 2.5px;
+    line-height: 1.7;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 0 8px;
+    max-width: 460px;
   }
   .tutorial-intro-body b { color: var(--text); font-weight: 600; }
   .tutorial-begin {
@@ -289,36 +265,6 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
-  .theme-toggle {
-    position: relative;
-    width: 30px;
-    height: 16px;
-    border-radius: 8px;
-    border: 1px solid var(--text-dim);
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    flex: none;
-    transition: border-color 0.2s ease;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .theme-toggle::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--text-mute);
-    transition: transform 0.2s ease, background 0.2s ease;
-  }
-  [data-theme="light"] .theme-toggle::before {
-    transform: translateX(14px);
-    background: var(--text);
-  }
-  .theme-toggle:active { border-color: var(--text); }
   .info-btn-icon::after {
     content: '';
     position: absolute;
@@ -1086,13 +1032,13 @@
   </div>
   <div class="subtitle-row">
     <div class="subtitle">First to $20K in hand</div>
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light or dark mode"></button>
   </div>
 </div>
 
 <!-- ───────── Mode select ───────── -->
 <div class="menu-view" id="mode-view">
   <div class="menu-tiles" id="menu-tiles">
+    <button class="menu-tile" onclick="showLobby()">Play Human</button>
     <button class="menu-tile" onclick="toggleMachineMenu()"><span class="tile-roll" id="machine-tile-roll" data-default="Play Machine"><span class="tile-row latest">Play Machine</span></span></button>
     <div class="diff-dots" role="group" aria-label="Difficulty">
       <button class="diff-dot" data-name="Simple"      onclick="startMachine('random')" aria-label="Simple"></button>
@@ -1100,7 +1046,6 @@
       <button class="diff-dot" data-name="Troublesome" onclick="startMachine('medium')" aria-label="Troublesome"></button>
       <button class="diff-dot" data-name="Impossible"  onclick="startMachine('hard')"   aria-label="Impossible"></button>
     </div>
-    <button class="menu-tile" onclick="showLobby()">Play Human</button>
     <button class="menu-tile" onclick="startTutorial()">Tutorial</button>
   </div>
 </div>
@@ -1133,10 +1078,22 @@
 <div id="game-view" class="hidden">
 
 <div class="tutorial-intro" id="tutorial-intro">
-  <div class="tutorial-intro-body">
-    You and another bandit have escaped to the mountains.<br><br>
-    Each night, both players secretly pick one action. Actions resolve simultaneously.<br><br>
-    First to <b>$20,000 in hand</b> wins.
+  <div class="info-content">
+    <div class="info-story">You and another bandit have escaped to the mountains</div>
+    <div class="info-section">
+      <div class="info-heading">How to play</div>
+      <div class="info-body">
+        Each night, both players secretly pick one action.<br>
+        Actions resolve simultaneously.
+      </div>
+    </div>
+    <div class="info-section">
+      <div class="info-heading">How to win</div>
+      <div class="info-body">
+        First to $20,000 in hand wins.<br>
+        Buried treasure doesn't count until dug up.
+      </div>
+    </div>
   </div>
   <button class="tutorial-begin" onclick="tutorialBegin()">Begin Tutorial</button>
 </div>
@@ -1239,7 +1196,7 @@
         <div class="row"><div class="row-name">Steal</div><div class="row-desc">Transfers the loot to your hand.</div></div>
         <div class="row"><div class="row-name">Raid</div><div class="row-desc">Transfers your opponent's hand to your hand.</div></div>
         <div class="row"><div class="row-name">Rob</div><div class="row-desc">Adds $1,000 to your hand.</div></div>
-        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand.</div></div>
+        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand. Two Spies swap vaults.</div></div>
         <div class="row"><div class="row-name">Stash</div><div class="row-desc">Buries your hand. Buried treasure is safe from Raid &amp; Ambush.</div></div>
         <div class="row"><div class="row-name">Dig</div><div class="row-desc">Unearths buried treasure to your hand.</div></div>
         <div class="row"><div class="row-name">Guard</div><div class="row-desc">Defends against Steal. Two Guards split the loot.</div></div>
@@ -1268,32 +1225,6 @@
 
 
 <script>
-  // ── Theme toggle ──────────────────────────────────────────────────
-  function applyTheme(mode) {
-    const html = document.documentElement;
-    if (mode === 'light') html.setAttribute('data-theme', 'light');
-    else html.removeAttribute('data-theme');
-    // Update theme-color meta for mobile status bar
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', mode === 'light' ? '#f0e8d6' : '#0a0a0a');
-  }
-  function toggleTheme() {
-    const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-    const next = (cur === 'light') ? 'dark' : 'light';
-    try { localStorage.setItem('bandits-theme', next); } catch (e) {}
-    applyTheme(next);
-  }
-  function initTheme() {
-    let saved = 'dark';
-    try { saved = localStorage.getItem('bandits-theme') || 'dark'; } catch (e) {}
-    applyTheme(saved);
-  }
-  // Run as soon as DOM body exists
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTheme);
-  } else {
-    initTheme();
-  }
 
 const GOAL        = 20_000;
 const INIT_LOOT = 1_000;
@@ -1641,6 +1572,9 @@ function pureResolve(s, youAct, mAct) {
     m -= mDigAmt; you += mDigAmt; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'DIG') {
     you -= youDigAmt; m += youDigAmt; const w = term(); if (w) return w;
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    const tmpV = youVault; youVault = mVault; mVault = tmpV;
+    // vault swap doesn't change hands; no terminal check
   }
   // 7. STEAL
   if (youAct === 'STEAL' && mAct === 'GUARD') {
@@ -1954,6 +1888,9 @@ function resolve(youAct, mAct) {
   } else if (mAct === 'SPY' && youAct === 'DIG') {
     you -= youDigAmt; m += youDigAmt;
     if (push('SPY_INTERCEPT', 'm', { caught: youDigAmt, target: 'DIG' })) return stages;
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    const tmpV = youVault; youVault = mVault; mVault = tmpV;
+    if (push('SPY_SWAP', 'both')) return stages;
   }
 
   // 7. STEAL phase. Independent of RAID now.
@@ -2089,7 +2026,7 @@ function resolveAndAnimate(youAct, mAct) {
       if (s.player === 'you')        document.getElementById('flow-raid-you').classList.add('show');
       else if (s.player === 'm')     document.getElementById('flow-raid-mach').classList.add('show');
       else if (s.player === 'both')  document.getElementById('flow-raid-swap').classList.add('show');
-    } else if (s.label === 'SPY' || s.label === 'SPY_INTERCEPT') {
+    } else if (s.label === 'SPY' || s.label === 'SPY_INTERCEPT' || s.label === 'SPY_SWAP') {
       if (s.player === 'you')        document.getElementById('flow-spy-you').classList.add('show');
       else if (s.player === 'm')     document.getElementById('flow-spy-mach').classList.add('show');
       else if (s.player === 'both')  document.getElementById('flow-spy-swap').classList.add('show');
@@ -2102,7 +2039,7 @@ function resolveAndAnimate(youAct, mAct) {
     tickTo('m-amount',   s.m);
     tickTo('loot-amount', s.loot);
     updateProgress(s.you, s.m);
-    const isVaultEvent = (s.label === 'STASH' || s.label === 'DIG' || s.label === 'SPY' || s.label === 'SPY_INTERCEPT');
+    const isVaultEvent = (s.label === 'STASH' || s.label === 'DIG' || s.label === 'SPY' || s.label === 'SPY_INTERCEPT' || s.label === 'SPY_SWAP');
     updateVaultLine('you-vault', s.youVault, isVaultEvent);
     updateVaultLine('m-vault',   s.mVault,   isVaultEvent);
 
@@ -2142,14 +2079,16 @@ function roundDescription(youAct, mAct, stages) {
     base = 'You attempted to spy on your partner · He beat you and robbed you.';
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
     base = 'Your partner attempted to spy on you · You beat him and robbed him.';
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    base = 'You both spied on each other, and stole each other\'s treasure.';
   } else if (youIntercept && youIntercept.target === 'STASH') {
-    base = 'You caught your partner burying treasure · When his back was turned, you made off with it.';
+    base = 'You spied on your partner burying treasure · When his back was turned, you made off with it.';
   } else if (youIntercept && youIntercept.target === 'DIG') {
-    base = 'You caught your partner digging up treasure · When his back was turned, you made off with it.';
+    base = 'You spied on your partner digging up treasure · When his back was turned, you made off with it.';
   } else if (mIntercept && mIntercept.target === 'STASH') {
-    base = 'Your partner caught you burying treasure · When your back was turned, he made off with it.';
+    base = 'Your partner spied on you burying treasure · When your back was turned, he made off with it.';
   } else if (mIntercept && mIntercept.target === 'DIG') {
-    base = 'Your partner caught you digging up treasure · When your back was turned, he made off with it.';
+    base = 'Your partner spied on you digging up treasure · When your back was turned, he made off with it.';
   } else if (youAct === 'RAID' && mAct === 'STASH') {
     base = 'You attempted to raid your partner, but he buried his wealth.';
   } else if (mAct === 'RAID' && youAct === 'STASH') {
@@ -2602,7 +2541,7 @@ const TUTORIAL_STEPS = [
 
   { id:'RAID',
     setup:{ you:0, youVault:0, m:5000, mVault:0, loot:1000 },
-    caption:'RAID takes your opponent\u2019s hand into yours.',
+    caption:'RAID takes your partner\u2019s hand into yours.',
     apply:(s)=>{ s.you += s.m; s.m = 0; },
     explain:'<span class="tut-explain">You raided $5,000 from your partner.</span>' },
 
@@ -2620,19 +2559,19 @@ const TUTORIAL_STEPS = [
 
   { id:'GUARD',
     setup:{ you:0, youVault:0, m:0, mVault:0, loot:8000 },
-    caption:'GUARD guards the loot. If your opponent tries to STEAL it, you take it instead.',
+    caption:'GUARD guards the loot. If your partner tries to STEAL it, you take it instead.',
     apply:(s)=>{ s.you += s.loot; s.loot = 0; },
     explain:'<span class="tut-explain">He tried to steal the $8,000 loot. You guarded it and took it yourself.</span>' },
 
   { id:'AMBUSH',
     setup:{ you:3000, youVault:0, m:6000, mVault:0, loot:1000 },
-    caption:'AMBUSH lies in wait. If your opponent RAIDs you, you flip it and take their hand.',
+    caption:'AMBUSH lies in wait. If your partner RAIDs you, you flip it and take their hand.',
     apply:(s)=>{ s.you += s.m; s.m = 0; },
     explain:'<span class="tut-explain">He RAIDed, but you were ready for him. You took his $6,000.</span>' },
 
   { id:'SPY',
     setup:{ you:0, youVault:0, m:0, mVault:3000, loot:1000 },
-    caption:'SPY watches your opponent close. If he plays STASH or DIGs treasure, you steal it.',
+    caption:'SPY watches your partner close. If he plays STASH or DIGs treasure, you steal it.',
     apply:(s)=>{ s.you += s.mVault; s.mVault = 0; },
     explain:'<span class="tut-explain">He tried to DIG up $3,000. You were watching, and took it.</span>' },
 
