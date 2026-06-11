@@ -1100,7 +1100,7 @@
       <button class="diff-dot" data-name="Simple"      onclick="startMachine('random')" aria-label="Simple"></button>
       <button class="diff-dot" data-name="Taxing"      onclick="startMachine('easy')"   aria-label="Taxing"></button>
       <button class="diff-dot" data-name="Troublesome" onclick="startMachine('medium')" aria-label="Troublesome"></button>
-      <button class="diff-dot" data-name="Impossible"  onclick="startMachine('hard')"   aria-label="Impossible"></button>
+      <button class="diff-dot" data-name="Bandit"      onclick="startMachine('bandit')" aria-label="Bandit"></button>
     </div>
     <button class="menu-tile" onclick="startTutorial()">Tutorial</button>
   </div>
@@ -1221,7 +1221,7 @@
     <button class="diff-dot" data-name="Simple"      onclick="playAgainAt('random')" aria-label="Simple"></button>
     <button class="diff-dot" data-name="Taxing"      onclick="playAgainAt('easy')"   aria-label="Taxing"></button>
     <button class="diff-dot" data-name="Troublesome" onclick="playAgainAt('medium')" aria-label="Troublesome"></button>
-    <button class="diff-dot" data-name="Impossible"  onclick="playAgainAt('hard')"   aria-label="Impossible"></button>
+    <button class="diff-dot" data-name="Bandit"      onclick="playAgainAt('bandit')" aria-label="Bandit"></button>
   </div>
   <button class="winner-btn" id="winner-btn" onclick="playAgain()"><span class="tile-roll" id="winner-tile-roll" data-default="Play again"><span class="tile-row latest">Play again</span></span></button>
 </div>
@@ -1508,7 +1508,7 @@ function isLegalRational(act) {
     case 'RAID':   return state.you > 0;   // vault is safe from raid
     case 'STEAL':  return true;  // opp may ADD-seed/double loot this same turn
     case 'GUARD':  return state.loot > 0;
-    case 'AMBUSH': return state.you > 0;  // catches attacker's hand (raider or spy)
+    case 'AMBUSH': return state.you > 0 || state.youVault > 0;  // catches raider's hand or spy's vault
     case 'ROB':    return true;
     case 'ADD':    return true;
     default:       return true;
@@ -1679,7 +1679,7 @@ function isLegalRationalFor(s, act, persp) {
     case 'RAID':   return op > 0;
     case 'STEAL':  return true;
     case 'GUARD':  return s.loot > 0;
-    case 'AMBUSH': return op > 0;
+    case 'AMBUSH': return op > 0 || opV > 0;
     default:       return true;
   }
 }
@@ -1835,7 +1835,7 @@ function partnerDecide(youAct) {
   if (aiDifficulty === 'random')      chosen = randomDecide();
   else if (aiDifficulty === 'easy')   chosen = searchDecide(1);          // Taxing: 1-ply Nash
   else if (aiDifficulty === 'medium') chosen = searchDecide(2);          // Troublesome: 2-ply Nash
-  else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct);      // Impossible: cheating
+  else if (aiDifficulty === 'bandit') chosen = searchDecide(3);          // Bandit: 3-ply Nash
   else                                chosen = searchDecide(2);
   // Anti-spam: random threshold so player can't predict when it'll switch.
   const n = ANTISPAM_MIN + Math.floor(Math.random() * (ANTISPAM_MAX - ANTISPAM_MIN + 1));
@@ -1843,7 +1843,7 @@ function partnerDecide(youAct) {
     if (aiDifficulty === 'random')      chosen = randomDecide(chosen);
     else if (aiDifficulty === 'easy')   chosen = searchDecide(1, chosen);
     else if (aiDifficulty === 'medium') chosen = searchDecide(2, chosen);
-    else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct, chosen);
+    else if (aiDifficulty === 'bandit') chosen = searchDecide(3, chosen);
   }
   aiRecent.push(chosen);
   if (aiRecent.length > 10) aiRecent.shift();
@@ -2341,7 +2341,7 @@ function toggleMachineMenu() {
   const roll = document.getElementById('machine-tile-roll');
   const current = roll && roll.querySelector('.tile-row:not(.exit)');
   const text = current ? current.textContent.trim() : '';
-  const NAME_TO_DIFF = { 'Simple':'random', 'Taxing':'easy', 'Troublesome':'medium', 'Impossible':'hard' };
+  const NAME_TO_DIFF = { 'Simple':'random', 'Taxing':'easy', 'Troublesome':'medium', 'Bandit':'bandit' };
   if (NAME_TO_DIFF[text]) {
     startMachine(NAME_TO_DIFF[text]);
     return;
