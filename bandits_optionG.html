@@ -1,0 +1,2815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bandits">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<title>Bandits</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root {
+      --bg: #0a0a0a;
+      --bg-active: #121212;
+      --text-bright: #ffffff;
+      --text: #f5f5f0;
+      --text-2: #c0c0c0;
+      --text-3: #b0b0b0;
+      --text-4: #a0a0a0;
+      --text-5: #9a9a98;
+      --text-6: #8a8a88;
+      --text-mute: #7a7a78;
+      --text-dim: #6a6a68;
+      --text-arrow: #5a5a58;
+      --text-fade: #4a4a48;
+      --text-faint: #3a3a38;
+      --text-disabled: #777;
+      --warn: #c46b6b;
+      --bg-modal: rgba(8, 8, 8, 0.97);
+      --overlay-04: rgba(245,245,240,0.04);
+      --overlay-06: rgba(245,245,240,0.06);
+      --overlay-08: rgba(245,245,240,0.08);
+      --overlay-10: rgba(245,245,240,0.10);
+      --overlay-12: rgba(245,245,240,0.12);
+      --overlay-14: rgba(245,245,240,0.14);
+      --overlay-15: rgba(245,245,240,0.15);
+      --overlay-30: rgba(245,245,240,0.30);
+    }
+
+  /* Light mode — pure inversion of every dark-mode value */
+  :root[data-theme="light"] {
+      --bg: #f5f5f5;
+      --bg-active: #ededed;
+      --text-bright: #000000;
+      --text: #0a0a0f;
+      --text-2: #3f3f3f;
+      --text-3: #4f4f4f;
+      --text-4: #5f5f5f;
+      --text-5: #656567;
+      --text-6: #757577;
+      --text-mute: #858587;
+      --text-dim: #959597;
+      --text-arrow: #a5a5a7;
+      --text-fade: #b5b5b7;
+      --text-faint: #c5c5c7;
+      --text-disabled: #888;
+      --warn: #c46b6b;
+      --bg-modal: rgba(247, 247, 247, 0.97);
+      --overlay-04: rgba(10,10,15,0.04);
+      --overlay-06: rgba(10,10,15,0.06);
+      --overlay-08: rgba(10,10,15,0.08);
+      --overlay-10: rgba(10,10,15,0.10);
+      --overlay-12: rgba(10,10,15,0.12);
+      --overlay-14: rgba(10,10,15,0.14);
+      --overlay-15: rgba(10,10,15,0.15);
+      --overlay-30: rgba(10,10,15,0.30);
+    }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; overscroll-behavior: none; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: env(safe-area-inset-top, 16px) 24px env(safe-area-inset-bottom, 16px);
+    padding-top: max(env(safe-area-inset-top, 16px), 24px);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+
+  /* Tutorial intro screen */
+  .tutorial-intro { display: none; }
+  body.tut-intro-mode .tutorial-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 40px 22px 8px;
+  }
+  body.tut-intro-mode .hands,
+  body.tut-intro-mode .loot-row,
+  body.tut-intro-mode .action-zone { display: none; }
+  .tutorial-intro-body {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 2.5px;
+    line-height: 1.7;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 0 8px;
+    max-width: 460px;
+  }
+  .tutorial-intro-body b { color: var(--text); font-weight: 600; }
+  .tutorial-begin {
+    background: transparent;
+    border: 1px solid var(--text);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 14px 40px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tutorial-begin:active { background: var(--overlay-10); }
+
+  /* ── Tutorial ─────────────────────────────────────────────────────────── */
+  .tutorial-caption {
+    display: none;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-2);
+    text-align: center;
+    padding: 0 4px 14px;
+    min-height: 40px;
+  }
+  .tutorial-caption.show { display: block; }
+  .tutorial-caption .tut-explain { color: var(--text); font-weight: 500; }
+  body.tutorial .log { display: none; }
+  body.tutorial .status { display: none; }
+  .action-btn.tut-dim { pointer-events: none; background: var(--bg); }
+  .action-btn.tut-dim .action-name { color: var(--text-faint); }
+  .action-btn.tut-dim .action-desc { color: var(--text-faint); opacity: 0.55; }
+  .action-btn.tut-live {
+    box-shadow: inset 0 0 0 1px var(--text);
+    animation: tut-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes tut-pulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px var(--overlay-30); }
+    50%      { box-shadow: inset 0 0 0 1px var(--text); }
+  }
+  .tutorial-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  body.tutorial .tutorial-bar { display: flex; }
+  .tutorial-skip, .tutorial-next {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    border-radius: 4px;
+    color: var(--text-mute);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 10px 18px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tutorial-next { color: var(--text); border-color: var(--text); }
+  .tutorial-skip:active, .tutorial-next:active { background: var(--overlay-10); }
+  .tutorial-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tut-arrow {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 22px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tut-arrow:disabled { opacity: 0.2; pointer-events: none; }
+  .tut-arrow:active { color: var(--text-mute); }
+  .tutorial-progress {
+    min-width: 44px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  /* ── HEADER ──────────────────────────────────────────────────────────── */
+  .header {
+    width: 100%;
+    padding-bottom: 18px;
+    margin-bottom: 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .title {
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .subtitle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: var(--text-5);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .status {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .status.hidden { display: none; }
+  .info-btn {
+    background: transparent;
+    border: none;
+    padding: 4px 0 0;
+    margin-top: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text-mute);
+    letter-spacing: 2px;
+    text-align: right;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .info-btn:active { color: var(--text); }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .info-btn-icon {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-5);
+    cursor: pointer;
+    line-height: 19px;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .info-btn-icon::after {
+    content: '';
+    position: absolute;
+    inset: -11px;
+  }
+  .info-btn-icon:active {
+    color: var(--text);
+    border-color: var(--text);
+  }
+  .theme-toggle {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text-5);
+    cursor: pointer;
+    line-height: 19px;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -11px;
+  }
+  .theme-toggle:active {
+    color: var(--text);
+    border-color: var(--text);
+  }
+
+  /* ── INFO OVERLAY ───────────────────────────────────────────────────── */
+  .info-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-modal);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 22px 40px;
+    overflow-y: auto;
+  }
+  .info-overlay.show { display: flex; }
+  .info-content {
+    width: 100%;
+    max-width: 460px;
+    color: var(--text);
+  }
+  .info-story {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 2.5px;
+    line-height: 1.7;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    padding: 0 8px;
+  }
+  .info-section { margin-bottom: 28px; }
+  .info-heading {
+    font-size: 11px;
+    color: var(--text-2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--overlay-08);
+  }
+  .info-body {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+  .info-body .resolution-flow {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    color: var(--text);
+    text-transform: uppercase;
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+  .info-body .resolution-arrow {
+    color: var(--text-arrow);
+    font-weight: 400;
+    padding: 0 3px;
+  }
+  .info-body .row {
+    display: flex;
+    gap: 14px;
+    padding: 2px 0;
+  }
+  .info-body .row-name {
+    flex: 0 0 70px;
+    color: var(--text);
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding-top: 2px;
+  }
+  .info-body .row-desc { flex: 1; }
+  .info-close {
+    background: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--overlay-30);
+    padding: 12px 28px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: block;
+    margin: 8px auto 30px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── HANDS ───────────────────────────────────────────────────────────── */
+  .hands {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--overlay-06);
+    position: relative;
+  }
+  .hand-block {
+    text-align: center;
+    padding: 10px 4px;
+    position: relative;
+  }
+  .hand-block + .hand-block {
+    border-left: 1px solid var(--overlay-06);
+  }
+  .hand-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .hand-label.you { color: var(--text-4); }
+  .hand-num {
+    font-size: 22px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  #m-amount { color: var(--text-2); }
+  .vault-line {
+    font-size: 12px;
+    color: var(--text-2);
+    letter-spacing: 2px;
+    margin-top: 12px;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    transition: opacity 0.3s;
+    min-height: 13px;
+  }
+  .vault-line.show { opacity: 0.9; }
+  .vault-line.active { opacity: 1; }
+  .progress {
+    width: 70%;
+    height: 2px;
+    margin: 12px auto 0;
+    background: var(--overlay-10);
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--text-2);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  /* ── LOOT ─────────────────────────────────────────────────────────────── */
+  .loot-row {
+    width: 100%;
+    text-align: center;
+    padding: 22px 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--overlay-06);
+  }
+  .loot-label {
+    font-size: 9px;
+    color: var(--text-2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .loot-num {
+    font-size: 30px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .loot-sub {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-top: 12px;
+  }
+  .drip-note {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  /* Split-flap digit animation */
+  .flap {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+  }
+  .flap.dollar {
+    margin-right: 0.18em;
+    opacity: 0.55;
+  }
+  .flap.tick {
+    animation: flap-tick 45ms ease-out;
+  }
+  @keyframes flap-tick {
+    0%   { transform: translateY(0); opacity: 1; }
+    45%  { transform: translateY(-2px); opacity: 0.3; }
+    55%  { transform: translateY(2px); opacity: 0.3; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .flap.dollar.tick { opacity: 0.55; }
+
+  /* RAID arrows overlay */
+  .flow-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-2);
+    font-weight: 300;
+  }
+  .flow {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    padding: 0 4px;
+  }
+  .flow.spy { color: var(--text); }
+  .flow.show { opacity: 1; }
+
+  /* ── STAGE LABEL ─────────────────────────────────────────────────────── */
+  .stage-label {
+    font-size: 13px;
+    color: var(--text-6);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    height: 15px;
+    margin-bottom: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
+    column-gap: 8px;
+  }
+  .stage-label.stage-single {
+    display: block;
+    text-align: center;
+  }
+  .stage-label .stage-you { text-align: right; }
+  .stage-label .stage-m   { text-align: left; }
+  .stage-label.show { opacity: 1; animation: ticker-pulse 0.4s ease-out; }
+  @keyframes ticker-pulse {
+    0%   { opacity: 0; transform: translateY(2px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── ACTIONS ─────────────────────────────────────────────────────────── */
+  .action-grid {
+    width: calc(100% + 48px);
+    margin-left: -24px;
+    margin-right: -24px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 64px;
+    gap: 1px;
+    background: var(--overlay-10);
+    padding: 1px;
+  }
+  .action-btn {
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    padding: 10px 12px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.1s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn.full { grid-column: 1 / -1; }
+  .action-btn:active { background: var(--bg-active); }
+  .action-btn.selected { background: var(--overlay-14); }
+  .action-btn.selected .action-name { color: var(--text-bright); }
+  .action-btn:disabled { opacity: 0.3; }
+  .action-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text);
+    transition: color 0.2s;
+    display: block;
+    text-align: center;
+  }
+  .action-desc {
+    font-size: 10px;
+    color: var(--text-disabled);
+    line-height: 1.3;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    display: block;
+    text-align: center;
+  }
+
+  /* ── RULES INFO ──────────────────────────────────────────────────────── */
+  .rules-info {
+    padding: 14px 0 10px;
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-arrow);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+    line-height: 1.7;
+  }
+  .rules-order { color: var(--text-dim); }
+  .rules-drip  { color: var(--text-fade); margin-top: 2px; }
+
+  /* ── LOG ─────────────────────────────────────────────────────────────── */
+  /* ── LOG (single-line ticker) ────────────────────────────────────────── */
+  .log {
+    width: 100%;
+    height: 32px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .log-row {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-arrow);
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+  .log-row.latest { color: var(--text); }
+  .log-row.enter-from { transform: translateY(100%); opacity: 0; }
+  .log-row.exit       { transform: translateY(-100%); opacity: 0; }
+  .log-rnd {
+    color: var(--text-fade);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── WIN OVERLAY ─────────────────────────────────────────────────────── */
+  .winner-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-modal);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 100;
+    text-align: center;
+    padding: 32px 24px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .winner-overlay.show {
+    display: flex;
+    opacity: 1;
+  }
+  .winner-overlay.show > * {
+    animation: winner-rise 0.55s ease-out both;
+  }
+  .winner-overlay.show > *:nth-child(1) { animation-delay: 0.05s; }
+  .winner-overlay.show > *:nth-child(2) { animation-delay: 0.15s; }
+  .winner-overlay.show > *:nth-child(3) { animation-delay: 0.25s; }
+  .winner-overlay.show > *:nth-child(4) { animation-delay: 0.35s; }
+  .winner-overlay.show > *:nth-child(5) { animation-delay: 0.45s; }
+  .winner-overlay.show > *:nth-child(6) { animation-delay: 0.55s; }
+  .winner-overlay.show > *:nth-child(7) { animation-delay: 0.65s; }
+  .winner-overlay.show > *:nth-child(8) { animation-delay: 0.75s; }
+
+  .winner-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    height: 56px;
+    margin-top: 12px;
+  }
+  .winner-dots.hidden { display: none; }
+  @keyframes winner-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .winner-eyebrow {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 22px;
+  }
+  .winner-title {
+    font-size: 30px;
+    font-weight: 400;
+    letter-spacing: 5px;
+    color: var(--text);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .winner-rule {
+    width: 32px;
+    height: 1px;
+    background: var(--text-2);
+    opacity: 0.55;
+    margin-bottom: 28px;
+  }
+  .winner-final {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 2.5px;
+    line-height: 1.7;
+    text-align: center;
+    text-transform: uppercase;
+    max-width: 300px;
+    margin-bottom: 40px;
+    padding: 0 8px;
+  }
+  .winner-score {
+    display: flex;
+    gap: 48px;
+    margin-bottom: 36px;
+  }
+  .winner-score-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .winner-score-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .winner-score-val {
+    font-size: 22px;
+    color: var(--text);
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .winner-score-col.is-winner .winner-score-val { color: var(--text-2); }
+  .winner-score-col.is-winner .winner-score-label { color: var(--text-2); opacity: 0.8; }
+  .winner-round {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+    max-width: 280px;
+    margin-bottom: 40px;
+  }
+  .winner-btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--overlay-15);
+    padding: 14px 36px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: border-color 0.2s, background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 220px;
+  }
+  .winner-btn:active {
+    background: var(--overlay-04);
+    border-color: var(--overlay-30);
+  }
+  .winner-btn .tile-roll { height: 16px; }
+
+  /* ── Narrow screens ──────────────────────────────────────────────────── */
+  @media (max-width: 360px) {
+    .hand-num, .loot-num { font-size: 19px; }
+    .title { font-size: 22px; }
+    .action-grid { grid-auto-rows: 64px; }
+  }
+
+  /* ── Short viewports (phones in browser) ───────────────────────────── */
+  @media (max-height: 850px) {
+    .header { margin-bottom: 24px; padding-bottom: 10px; }
+    .hands { padding-top: 12px; }
+    .hand-block { padding: 6px 4px; }
+    .hand-label { margin-bottom: 10px; }
+    .vault-line { margin-top: 8px; }
+    .progress { margin: 8px auto 0; }
+    .loot-row { padding: 16px 0; }
+    .loot-label { margin-bottom: 8px; }
+    .action-zone { margin-top: 28px; }
+    .stage-label { margin-bottom: 14px; }
+    .action-grid { grid-auto-rows: 52px; margin-bottom: 10px; }
+    .log { margin-top: 10px; margin-bottom: 8px; }
+  }
+
+  /* ── Very short viewports (iPhone SE, older iPhones) ────────────────── */
+  @media (max-height: 700px) {
+    .header { margin-bottom: 14px; padding-bottom: 4px; }
+    .title { font-size: 22px; }
+    .hand-label { margin-bottom: 4px; }
+    .vault-line { margin-top: 4px; }
+    .progress { margin: 4px auto 0; }
+    .loot-row { padding: 10px 0; }
+    .loot-label { margin-bottom: 6px; }
+    .action-zone { margin-top: 16px; }
+    .stage-label { margin-bottom: 8px; }
+    .action-grid { grid-auto-rows: 44px; margin-bottom: 4px; }
+    .log { margin-top: 4px; margin-bottom: 0; }
+  }
+  /* ── Mode select & friend lobby ──────────────────────────────────────── */
+  .hidden { display: none !important; }
+
+  .menu-view {
+    width: 100%;
+    padding: 40px 0 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .menu-buttons {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .menu-tiles {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--overlay-10);
+    padding: 1px;
+  }
+  .menu-tile {
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+  .menu-tile:active { background: var(--bg-active); }
+  .diff-dots {
+    display: none;
+    height: 64px;
+    background: var(--bg);
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+  .menu-tiles.expanded .diff-dots { display: flex; }
+  .diff-dot {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diff-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 8px; height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    background: var(--text-3);
+    transition: background 0.15s, transform 0.15s;
+  }
+  .diff-dot:active::after,
+  .diff-dot:hover::after {
+    background: var(--text);
+    transform: scale(1.4);
+  }
+  .tile-roll {
+    position: relative;
+    height: 18px;
+    width: 100%;
+    overflow: hidden;
+    display: block;
+  }
+  .tile-row {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+  }
+  .tile-row.enter-from { transform: translateY(100%); opacity: 0; }
+  .tile-row.exit       { transform: translateY(-100%); opacity: 0; }
+  .menu-btn {
+    background: var(--overlay-04);
+    border: 1px solid var(--text-faint);
+    color: var(--text);
+    padding: 22px 20px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+    text-align: center;
+  }
+  .menu-btn:active { background: var(--overlay-12); border-color: var(--text-2); }
+  .menu-btn .menu-btn-desc {
+    display: block;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    color: var(--text-2);
+    text-transform: none;
+  }
+
+  .lobby-code {
+    font-size: 44px;
+    font-weight: 300;
+    letter-spacing: 12px;
+    color: var(--text);
+    margin: 24px 0 12px;
+    font-variant-numeric: tabular-nums;
+    user-select: all;
+  }
+  .lobby-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin-bottom: 28px;
+  }
+  .lobby-status {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-2);
+    margin-top: 8px;
+    min-height: 16px;
+  }
+  .lobby-status.error { color: var(--warn); }
+  .lobby-status.ok { color: var(--text-2); }
+
+  .lobby-input {
+    background: transparent;
+    border: 1px solid var(--text-faint);
+    color: var(--text);
+    padding: 16px 20px;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 220px;
+    outline: none;
+    margin-bottom: 20px;
+  }
+  .lobby-input:focus { border-color: var(--text-2); }
+
+  .menu-back {
+    margin-top: 36px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+  }
+  .menu-back:active { color: var(--text); }
+
+  /* Game view layout */
+  #game-view {
+    width: 100%;
+  }
+  .action-zone {
+    width: 100%;
+    margin-top: 56px;
+  }
+
+  /* "Waiting for partner" inline indicator on the action grid */
+  .actions.waiting { opacity: 0.35; pointer-events: none; }
+  .wait-line {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    padding: 8px 0 0;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared header — visible across all views -->
+<div class="header" id="header">
+  <div class="title-row">
+    <div class="title">BANDITS</div>
+    <button class="info-btn-icon" onclick="showInfo()" aria-label="Info">i</button>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+    <div class="status" id="status">Night 1</div>
+  </div>
+  <div class="subtitle-row">
+    <div class="subtitle">First to $20K in hand</div>
+  </div>
+</div>
+
+<!-- ───────── Mode select ───────── -->
+<div class="menu-view" id="mode-view">
+  <div class="menu-tiles" id="menu-tiles">
+    <button class="menu-tile" onclick="showLobby()">Play Human</button>
+    <button class="menu-tile" onclick="toggleMachineMenu()"><span class="tile-roll" id="machine-tile-roll" data-default="Play Machine"><span class="tile-row latest">Play Machine</span></span></button>
+    <div class="diff-dots" role="group" aria-label="Difficulty">
+      <button class="diff-dot" data-name="Simple"      onclick="startMachine('random')" aria-label="Simple"></button>
+      <button class="diff-dot" data-name="Taxing"      onclick="startMachine('easy')"   aria-label="Taxing"></button>
+      <button class="diff-dot" data-name="Troublesome" onclick="startMachine('medium')" aria-label="Troublesome"></button>
+      <button class="diff-dot" data-name="Impossible"  onclick="startMachine('hard')"   aria-label="Impossible"></button>
+    </div>
+    <button class="menu-tile" onclick="startTutorial()">Tutorial</button>
+  </div>
+</div>
+
+<!-- ───────── Friend lobby ───────── -->
+<div class="menu-view hidden" id="lobby-view">
+
+  <div id="lobby-menu" class="menu-buttons">
+    <button class="menu-btn" onclick="createRoom()">Create game</button>
+    <button class="menu-btn" onclick="showJoin()">Join game</button>
+  </div>
+
+  <div id="lobby-create" class="hidden" style="text-align:center;">
+    <div class="lobby-code" id="lobby-code">...</div>
+    <div class="lobby-label">Share this code</div>
+    <div class="lobby-status" id="lobby-create-status">Waiting for partner</div>
+  </div>
+
+  <div id="lobby-join" class="hidden" style="text-align:center;">
+    <input class="lobby-input" id="lobby-join-input" type="text" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')joinRoom()">
+    <br>
+    <button class="menu-btn" style="width:220px; padding:16px 0;" onclick="joinRoom()">Connect</button>
+    <div class="lobby-status" id="lobby-join-status"></div>
+  </div>
+
+  <button class="menu-back" id="lobby-back" onclick="backToMode()">Back</button>
+</div>
+
+<!-- ───────── Game ───────── -->
+<div id="game-view" class="hidden">
+
+<div class="tutorial-intro" id="tutorial-intro">
+  <div class="info-content">
+    <div class="info-story">You and another bandit have escaped to the mountains</div>
+    <div class="info-section">
+      <div class="info-heading">How to play</div>
+      <div class="info-body">
+        Each night, both players secretly pick one action.<br>
+        Actions resolve simultaneously.
+      </div>
+    </div>
+    <div class="info-section">
+      <div class="info-heading">How to win</div>
+      <div class="info-body">
+        The first to make 20k wins.<br>
+        Buried treasure doesn't count until dug up.
+      </div>
+    </div>
+  </div>
+  <button class="tutorial-begin" onclick="tutorialBegin()">Begin Tutorial</button>
+</div>
+
+<div class="hands">
+  <div class="hand-block">
+    <div class="hand-label you">You</div>
+    <div class="hand-num" id="you-amount"><span class="flap dollar">$</span><span class="flap">0</span></div>
+    <div class="vault-line" id="you-vault">&nbsp;</div>
+    <div class="progress"><div class="progress-fill" id="you-progress"></div></div>
+  </div>
+  <div class="hand-block">
+    <div class="hand-label">Partner</div>
+    <div class="hand-num" id="m-amount"><span class="flap dollar">$</span><span class="flap">0</span></div>
+    <div class="vault-line" id="m-vault">&nbsp;</div>
+    <div class="progress"><div class="progress-fill" id="m-progress"></div></div>
+  </div>
+  <div class="flow-overlay">
+    <span class="flow" id="flow-raid-you">←</span>
+    <span class="flow" id="flow-raid-mach">→</span>
+    <span class="flow" id="flow-raid-swap">⇄</span>
+    <span class="flow spy" id="flow-spy-you">←</span>
+    <span class="flow spy" id="flow-spy-mach">→</span>
+    <span class="flow spy" id="flow-spy-swap">⇄</span>
+  </div>
+</div>
+
+<div class="loot-row">
+  <div class="loot-label">Loot</div>
+  <div class="loot-num" id="loot-amount"><span class="flap dollar">$</span><span class="flap">1</span><span class="flap">,</span><span class="flap">0</span><span class="flap">0</span><span class="flap">0</span></div>
+</div>
+
+<div class="action-zone">
+  <div class="stage-label" id="stage-label">&nbsp;</div>
+  <div class="tutorial-caption" id="tutorial-caption"></div>
+  <div class="action-grid" id="action-grid"></div>
+  <div class="log" id="log"></div>
+  <div class="tutorial-bar" id="tutorial-bar">
+    <button class="tutorial-skip" id="tutorial-skip" onclick="exitTutorial()">Exit</button>
+    <div class="tutorial-nav">
+      <button class="tut-arrow" id="tut-back" onclick="tutorialBack()" aria-label="Previous">&lsaquo;</button>
+      <div class="tutorial-progress" id="tutorial-progress">1 / 9</div>
+      <button class="tut-arrow" id="tut-fwd" onclick="tutorialForward()" aria-label="Next">&rsaquo;</button>
+    </div>
+    <button class="tutorial-next" id="tutorial-next" onclick="tutorialNext()">Next</button>
+  </div>
+</div>
+
+
+
+
+<div class="winner-overlay" id="winner-overlay">
+  <div class="winner-eyebrow" id="winner-eyebrow"></div>
+  <div class="winner-title" id="winner-title">You Win</div>
+  <div class="winner-rule"></div>
+  <div class="winner-final" id="winner-final"></div>
+  <div class="winner-score">
+    <div class="winner-score-col" id="winner-col-you">
+      <span class="winner-score-label">You</span>
+      <span class="winner-score-val" id="winner-score-you">$0</span>
+    </div>
+    <div class="winner-score-col" id="winner-col-m">
+      <span class="winner-score-label">Partner</span>
+      <span class="winner-score-val" id="winner-score-m">$0</span>
+    </div>
+  </div>
+  <div class="winner-round" id="winner-round"></div>
+  <div class="winner-dots" id="winner-dots" role="group" aria-label="Difficulty">
+    <button class="diff-dot" data-name="Simple"      onclick="playAgainAt('random')" aria-label="Simple"></button>
+    <button class="diff-dot" data-name="Taxing"      onclick="playAgainAt('easy')"   aria-label="Taxing"></button>
+    <button class="diff-dot" data-name="Troublesome" onclick="playAgainAt('medium')" aria-label="Troublesome"></button>
+    <button class="diff-dot" data-name="Impossible"  onclick="playAgainAt('hard')"   aria-label="Impossible"></button>
+  </div>
+  <button class="winner-btn" id="winner-btn" onclick="playAgain()"><span class="tile-roll" id="winner-tile-roll" data-default="Play again"><span class="tile-row latest">Play again</span></span></button>
+</div>
+
+</div> <!-- end #game-view -->
+
+<div class="info-overlay" id="info-overlay" onclick="hideInfo()">
+  <div class="info-content" onclick="event.stopPropagation()">
+    <div class="info-story">You and another bandit have escaped to the mountains</div>
+    <div class="info-section">
+      <div class="info-heading">How to play</div>
+      <div class="info-body">
+        Each night, both players secretly pick one action.<br>
+        Actions resolve simultaneously.
+      </div>
+    </div>
+    <div class="info-section">
+      <div class="info-heading">How to win</div>
+      <div class="info-body">
+        The first to make 20k wins.<br>
+        Buried treasure doesn't count until dug up.
+      </div>
+    </div>
+    <div class="info-section">
+      <div class="info-heading">Actions</div>
+      <div class="info-body">
+        <div class="row"><div class="row-name">Add</div><div class="row-desc">Doubles the loot. Adds $1K to an empty pot.</div></div>
+        <div class="row"><div class="row-name">Steal</div><div class="row-desc">Transfers the loot to your hand.</div></div>
+        <div class="row"><div class="row-name">Raid</div><div class="row-desc">Transfers your opponent's hand to your hand.</div></div>
+        <div class="row"><div class="row-name">Rob</div><div class="row-desc">Adds $1,000 to your hand.</div></div>
+        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand. Two Spies swap vaults.</div></div>
+        <div class="row"><div class="row-name">Stash</div><div class="row-desc">Buries your hand. Buried treasure is safe from Raid &amp; Ambush.</div></div>
+        <div class="row"><div class="row-name">Dig</div><div class="row-desc">Unearths buried treasure to your hand.</div></div>
+        <div class="row"><div class="row-name">Guard</div><div class="row-desc">Defends against Steal. Two Guards split the loot.</div></div>
+        <div class="row"><div class="row-name">Ambush</div><div class="row-desc">Defends and reverses Raid &amp; Spy.</div></div>
+      </div>
+    </div>
+    <div class="info-section">
+      <div class="info-heading">Resolution order</div>
+      <div class="info-body">
+        <div class="resolution-flow">
+          <span>ADD</span><span class="resolution-arrow">→</span>
+          <span>STASH</span><span class="resolution-arrow">→</span>
+          <span>ROB</span><span class="resolution-arrow">→</span>
+          <span>RAID</span><span class="resolution-arrow">→</span>
+          <span>DIG</span><span class="resolution-arrow">→</span>
+          <span>SPY</span><span class="resolution-arrow">→</span>
+          <span>STEAL</span><span class="resolution-arrow">→</span>
+          <span>GUARD</span><span class="resolution-arrow">→</span>
+          <span>AMBUSH</span>
+        </div>
+      </div>
+    </div>
+    <button class="info-close" onclick="hideInfo()">Close</button>
+  </div>
+</div>
+
+
+<script>
+
+const GOAL        = 20_000;
+const INIT_LOOT = 1_000;
+
+const ACTIONS = [
+  { id: 'ADD',    name: 'ADD',      desc: 'Add or double loot',  full: true },
+  { id: 'STEAL',  name: 'STEAL',    desc: 'Take the loot' },
+  { id: 'RAID',   name: 'RAID',     desc: 'Steal his wealth' },
+  { id: 'STASH',  name: 'STASH',    desc: 'Bury treasure' },
+  { id: 'DIG',    name: 'DIG',      desc: 'Dig up treasure' },
+  { id: 'ROB',    name: 'ROB',      desc: 'Rob a local' },
+  { id: 'SPY',    name: 'SPY',      desc: 'Watch him close' },
+  { id: 'GUARD',  name: 'GUARD',    desc: 'Guard the loot' },
+  { id: 'AMBUSH', name: 'AMBUSH',   desc: 'Lay in wait' },
+];
+
+const PHRASES_YOU = {
+  ADD:    'doubled the loot',
+  STASH:  'buried treasure',
+  DIG:    'dug up treasure',
+  SPY:    'spied on your partner',
+  ROB:    'robbed a local',
+  AMBUSH: 'lay in wait',
+  GUARD:  'guarded the loot',
+  RAID:   'raided your partner',
+  STEAL:  'stole the loot',
+};
+const PHRASES_M = {
+  ADD:    'doubled the loot',
+  STASH:  'buried treasure',
+  DIG:    'dug up treasure',
+  SPY:    'spied on you',
+  ROB:    'robbed a local',
+  AMBUSH: 'lay in wait',
+  GUARD:  'guarded the loot',
+  RAID:   'raided you',
+  STEAL:  'stole the loot',
+};
+
+const STAGE_ORDER = ['ADD', 'STASH', 'DIG', 'SPY', 'ROB', 'AMBUSH', 'GUARD', 'RAID', 'STEAL'];
+
+let state = null;
+const _tickers = {};
+
+function showInfo() {
+  document.getElementById('info-overlay').classList.add('show');
+}
+function hideInfo() {
+  document.getElementById('info-overlay').classList.remove('show');
+}
+
+function resetGame() {
+  state = { you: 0, youVault: 0, m: 0, mVault: 0, loot: INIT_LOOT, round: 1, locked: false };
+  aiRecent = [];
+  mittensStart();
+  document.getElementById('winner-overlay').classList.remove('show');
+  document.getElementById('log').innerHTML = '';
+  ['you-amount','m-amount','loot-amount'].forEach(id => {
+    const el = document.getElementById(id);
+    el.dataset.value = '';
+    el.dataset.lastStr = '';
+  });
+  hideAllIndicators();
+  clearStageLabel();
+  renderActions();
+  updateDisplay(true);
+}
+
+function renderActions() {
+  const grid = document.getElementById('action-grid');
+  grid.innerHTML = '';
+  ACTIONS.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn' + (a.full ? ' full' : '');
+    btn.dataset.id = a.id;
+    btn.innerHTML = `<span class="action-name">${a.name}</span><span class="action-desc">${a.desc}</span>`;
+    btn.onclick = () => play(a.id);
+    grid.appendChild(btn);
+  });
+}
+
+// Push a one-off informational message into the log feed (used for things
+// like illegal-move notices). Styled like a normal log row.
+function addLogMessage(text) {
+  const el = document.getElementById('log');
+  el.querySelectorAll('.log-row:not(.exit)').forEach(r => {
+    r.classList.remove('latest');
+    r.classList.add('exit');
+    setTimeout(() => r.remove(), 600);
+  });
+  const row = document.createElement('div');
+  row.className = 'log-row latest enter-from';
+  row.innerHTML = `<span class="log-body">${text}</span>`;
+  el.appendChild(row);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => row.classList.remove('enter-from'));
+  });
+}
+
+function fmtNumber(n) { return Math.floor(n).toLocaleString(); }
+
+function renderFlapped(el, val) {
+  const str = '$' + fmtNumber(val);
+  const prev = el.dataset.lastStr;
+  if (prev === str) return;
+
+  // Length change → rebuild span structure once.
+  if (!prev || prev.length !== str.length) {
+    let html = '';
+    for (let i = 0; i < str.length; i++) {
+      html += `<span class="flap${i === 0 ? ' dollar' : ''}">${str[i]}</span>`;
+    }
+    el.innerHTML = html;
+    el.dataset.lastStr = str;
+    return;
+  }
+
+  // Same length → just patch the digits that changed. No HTML reparse, no GC.
+  const children = el.children;
+  for (let i = 0; i < str.length; i++) {
+    if (prev[i] !== str[i]) children[i].textContent = str[i];
+  }
+  el.dataset.lastStr = str;
+}
+
+function tickTo(elId, target, instant) {
+  target = Math.floor(target);
+  const el = document.getElementById(elId);
+  if (_tickers[elId]) cancelAnimationFrame(_tickers[elId]);
+
+  const startVal = parseInt(el.dataset.value || '0', 10) || 0;
+  if (instant || startVal === target) {
+    renderFlapped(el, target);
+    el.dataset.value = target;
+    return;
+  }
+
+  const startTime = performance.now();
+  const duration  = 140;
+  const delta     = target - startVal;
+
+  const step = (now) => {
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const v = Math.round(startVal + delta * eased);
+    renderFlapped(el, v);
+    el.dataset.value = v;
+    if (t < 1) {
+      _tickers[elId] = requestAnimationFrame(step);
+    } else {
+      renderFlapped(el, target);
+      el.dataset.value = target;
+    }
+  };
+  _tickers[elId] = requestAnimationFrame(step);
+}
+
+function updateVaultLine(elId, amount, active) {
+  const el = document.getElementById(elId);
+  if (amount > 0) {
+    el.textContent = `Buried $${fmtNumber(amount)}`;
+    el.classList.add('show');
+    el.classList.toggle('active', !!active);
+  } else {
+    el.innerHTML = '&nbsp;';
+    el.classList.remove('show', 'active');
+  }
+}
+
+function updateProgress(youVal, mVal) {
+  document.getElementById('you-progress').style.width = Math.min(100, (youVal / GOAL) * 100) + '%';
+  document.getElementById('m-progress').style.width   = Math.min(100, (mVal   / GOAL) * 100) + '%';
+}
+
+function updateDisplay(instant) {
+  tickTo('you-amount', state.you, instant);
+  tickTo('m-amount',   state.m,   instant);
+  tickTo('loot-amount', state.loot, instant);
+  updateVaultLine('you-vault', state.youVault);
+  updateVaultLine('m-vault', state.mVault);
+  updateProgress(state.you, state.m);
+  document.getElementById('status').textContent = `Night ${state.round}`;
+}
+
+function hideAllIndicators() {
+  ['flow-raid-you','flow-raid-mach','flow-raid-swap',
+   'flow-spy-you', 'flow-spy-mach', 'flow-spy-swap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+}
+
+function clearStageLabel() {
+  const sl = document.getElementById('stage-label');
+  sl.classList.remove('show');
+  sl.innerHTML = '&nbsp;';
+}
+
+function showStageLabel(youAct, mAct) {
+  const sl = document.getElementById('stage-label');
+  if (mAct === undefined) {
+    sl.classList.add('stage-single');
+    sl.innerHTML = '';
+    sl.textContent = youAct;
+  } else {
+    sl.classList.remove('stage-single');
+    sl.innerHTML = `<span class="stage-you"></span><span class="stage-dot">·</span><span class="stage-m"></span>`;
+    sl.querySelector('.stage-you').textContent = youAct;
+    sl.querySelector('.stage-m').textContent = mAct;
+  }
+  sl.classList.add('show');
+}
+
+
+// Returns true if `act` could plausibly gain Medium something in the current state.
+// Irrational examples this filters out:
+//   AMBUSH when AI has nothing to defend (opp has no reason to RAID or SPY)
+//   RAID / SPY when opp has nothing in hand or vault to take
+//   STEAL / GUARD when the loot pile is empty
+function isLegalRational(act) {
+  switch (act) {
+    case 'STASH':  return state.m > 0;
+    case 'DIG':    return state.mVault > 0;
+    case 'SPY':    return state.you > 0 || state.youVault > 0;
+    case 'RAID':   return state.you > 0;   // vault is safe from raid
+    case 'STEAL':  return true;  // opp may ADD-seed/double loot this same turn
+    case 'GUARD':  return state.loot > 0;
+    case 'AMBUSH': return state.you > 0;  // catches attacker's hand (raider or spy)
+    case 'ROB':    return true;
+    case 'ADD':    return true;
+    default:       return true;
+  }
+}
+
+// Easy: always vies for the biggest pile on the board.
+function randomDecide(forbidden) {
+  // Uniform random over all moves that pass the rationality filter.
+  const all = ['ADD','STASH','DIG','SPY','ROB','AMBUSH','GUARD','RAID','STEAL'];
+  const legal = all.filter(a => isLegalRational(a) && a !== forbidden);
+  if (legal.length === 0) return 'ROB';
+  return legal[Math.floor(Math.random() * legal.length)];
+}
+
+function easyDecide() {
+  // Pure biggest-pile attacker. No defensive moves.
+  // Under spyloot, SPY doesn't grab a pile directly (it catches transfers to loot)
+  // so it's no longer a Greedy candidate.
+  const candidates = [
+    [state.you,  'RAID'],    // opp hand biggest -> take it
+    [state.loot, 'STEAL'],   // loot biggest -> take it
+  ];
+  candidates.sort((a, b) => b[0] - a[0]);
+  for (const [val, act] of candidates) {
+    if (val <= 0) continue;
+    if (!isLegalRational(act)) continue;
+    return act;
+  }
+  return 'ROB';   // nothing to attack -> +$1K
+}
+
+// Paranoid: counters whatever the Greedy/Easy player would do.
+// Reads opp's expected move from the biggest pile and plays the counter.
+function paranoidDecide() {
+  const candidates = [
+    [state.you,      'SPY'],     // opp hand biggest -> opp will STASH -> SPY catches the stashed vault
+    [state.loot,     'GUARD'],   // loot biggest -> opp will STEAL -> GUARD catches it
+    [state.m,        'STASH'],   // own hand biggest -> opp will RAID -> STASH dodges
+    [state.mVault,   'DIG'],     // own vault biggest -> opp will SPY -> DIG empties first
+    [state.youVault, 'RAID'],    // opp vault biggest -> opp will DIG -> RAID the dug-up hand
+  ];
+  candidates.sort((a, b) => b[0] - a[0]);
+  for (const [val, act] of candidates) {
+    if (val <= 0) continue;
+    if (!isLegalRational(act)) continue;
+    return act;
+  }
+  return 'ROB';
+}
+
+// Medium: defensive or aggressive based on Medium's strength relative to
+// the biggest outside threat — either the opponent's total wealth or the loot
+// pile (which the opponent could capture). If Medium's total is less than the
+// max of those two, it plays aggressively. Otherwise it plays defensively.
+// Medium: aggressive when behind, anticipatory defense when ahead.
+// Win check fires first: if a guaranteed-winning move is available this turn, take it.
+// Pure-function copy of resolve() — takes state, returns next state + terminal flag.
+// Used for lookahead. Mirrors resolve()'s phase order and mid-phase win check.
+const ALL_ACTIONS = ['ADD', 'STASH', 'DIG', 'SPY', 'ROB', 'AMBUSH', 'GUARD', 'RAID', 'STEAL'];
+
+function pureResolve(s, youAct, mAct) {
+  let { you, youVault, m, mVault, loot } = s;
+  let youStashAmt = 0, mStashAmt = 0, youDigAmt = 0, mDigAmt = 0;
+  const term = () => {
+    const yo = you >= GOAL, mo = m >= GOAL;
+    if (!yo && !mo) return null;
+    if (you !== m) return { you, youVault, m, mVault, loot, terminal: true };
+    return null;
+  };
+  // 1. ADD
+  if (youAct === 'ADD') { loot = loot === 0 ? 1000 : loot * 2; const w = term(); if (w) return w; }
+  if (mAct   === 'ADD') { loot = loot === 0 ? 1000 : loot * 2; const w = term(); if (w) return w; }
+  // 2. STASH (track amount for SPY interception)
+  if (youAct === 'STASH') {
+    youStashAmt = you; youVault += you; you = 0;
+    const w = term(); if (w) return w;
+  }
+  if (mAct === 'STASH') {
+    mStashAmt = m; mVault += m; m = 0;
+    const w = term(); if (w) return w;
+  }
+  // 3. ROB — +$1K to hand. Win check DEFERRED (snipe-at-win).
+  if (youAct === 'ROB') { you += 1000; }
+  if (mAct   === 'ROB') { m += 1000; }
+  // 4. RAID — grabs post-ROB hand. Vault is safe. Can snipe a winning ROB.
+  if (youAct === 'RAID' && mAct === 'AMBUSH') {
+    m += you; you = 0; const w = term(); if (w) return w;
+  } else if (mAct === 'RAID' && youAct === 'AMBUSH') {
+    you += m; m = 0; const w = term(); if (w) return w;
+  } else if (youAct === 'RAID' && mAct === 'RAID') {
+    const t = you; you = m; m = t; const w = term(); if (w) return w;
+  } else if (youAct === 'RAID') {
+    you += m; m = 0; const w = term(); if (w) return w;
+  } else if (mAct === 'RAID') {
+    m += you; you = 0; const w = term(); if (w) return w;
+  }
+  // 4.5. Deferred ROB-win check: only fires if ROBer wasn't RAIDed.
+  {
+    const youRobCaught = (mAct === 'RAID');
+    const mRobCaught   = (youAct === 'RAID');
+    if (youAct === 'ROB' && !youRobCaught) { const w = term(); if (w) return w; }
+    if (mAct   === 'ROB' && !mRobCaught)   { const w = term(); if (w) return w; }
+  }
+  // 5. DIG (vault → hand). Win check DEFERRED (snipe-at-win).
+  if (youAct === 'DIG') {
+    youDigAmt = youVault; you += youVault; youVault = 0;
+  }
+  if (mAct === 'DIG') {
+    mDigAmt = mVault; m += mVault; mVault = 0;
+  }
+  // 6. SPY phase — catches STASH or DIG transit. Can snipe a winning DIG.
+  if (youAct === 'SPY' && mAct === 'AMBUSH') {
+    m += youVault; youVault = 0; const w = term(); if (w) return w;
+  } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
+    you += mVault; mVault = 0; const w = term(); if (w) return w;
+  } else if (youAct === 'SPY' && mAct === 'STASH') {
+    mVault -= mStashAmt; you += mStashAmt; const w = term(); if (w) return w;
+  } else if (mAct === 'SPY' && youAct === 'STASH') {
+    youVault -= youStashAmt; m += youStashAmt; const w = term(); if (w) return w;
+  } else if (youAct === 'SPY' && mAct === 'DIG') {
+    m -= mDigAmt; you += mDigAmt; const w = term(); if (w) return w;
+  } else if (mAct === 'SPY' && youAct === 'DIG') {
+    you -= youDigAmt; m += youDigAmt; const w = term(); if (w) return w;
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    const tmpV = youVault; youVault = mVault; mVault = tmpV;
+    // vault swap doesn't change hands; no terminal check
+  }
+  // 6.5. Deferred DIG-win check: only fires if DIGger wasn't SPY-sniped.
+  {
+    const youDigCaught = (youAct === 'DIG' && mAct === 'SPY');
+    const mDigCaught   = (mAct   === 'DIG' && youAct === 'SPY');
+    if (youAct === 'DIG' && !youDigCaught) { const w = term(); if (w) return w; }
+    if (mAct   === 'DIG' && !mDigCaught)   { const w = term(); if (w) return w; }
+  }
+  // 7. STEAL
+  if (youAct === 'STEAL' && mAct === 'GUARD') {
+    m += loot; loot = 0; const w = term(); if (w) return w;
+  } else if (mAct === 'STEAL' && youAct === 'GUARD') {
+    you += loot; loot = 0; const w = term(); if (w) return w;
+  } else if (youAct === 'STEAL' && mAct === 'STEAL') {
+    // both fail
+  } else if (youAct === 'STEAL') {
+    you += loot; loot = 0; const w = term(); if (w) return w;
+  } else if (mAct === 'STEAL') {
+    m += loot; loot = 0; const w = term(); if (w) return w;
+  }
+  // 8. Both GUARD split
+  if (youAct === 'GUARD' && mAct === 'GUARD' && loot > 0) {
+    const half = Math.floor(loot / 2);
+    you += half; m += loot - half; loot = 0;
+    const w = term(); if (w) return w;
+  }
+  // 9. Both AMBUSH: outsiders take loot
+  if (youAct === 'AMBUSH' && mAct === 'AMBUSH' && loot > 0) loot = 0;
+  return { you, youVault, m, mVault, loot, terminal: false };
+}
+
+function isLegalRationalFor(s, act, persp) {
+  const me  = persp === 'm' ? s.m       : s.you;
+  const meV = persp === 'm' ? s.mVault  : s.youVault;
+  const op  = persp === 'm' ? s.you     : s.m;
+  const opV = persp === 'm' ? s.youVault: s.mVault;
+  switch (act) {
+    case 'STASH':  return me > 0;
+    case 'DIG':    return meV > 0;
+    case 'SPY':    return op > 0 || opV > 0;
+    case 'RAID':   return op > 0;
+    case 'STEAL':  return true;
+    case 'GUARD':  return s.loot > 0;
+    case 'AMBUSH': return op > 0;
+    default:       return true;
+  }
+}
+
+// ── Nash-based partner AI ───────────────────────────────────────────────
+const TROUBLESOME_DEPTH    = 3;
+const IMPOSSIBLE_LOOKAHEAD = 2;
+const QUIESCENCE_MAX       = 0;
+const RM_ITERS             = 600;
+const ANTISPAM_MIN = 3;
+const ANTISPAM_MAX = 5;
+let aiRecent = [];
+
+// Leaf heuristic: P(row wins) ≈ sigmoid(wealth diff / half-goal).
+function evalLeaf(s) {
+  const y = s.you + s.youVault;
+  const m = s.m   + s.mVault;
+  return 1 / (1 + Math.exp(-(y - m) / (GOAL * 0.5)));
+}
+
+// Loud = a side is one move from completing (one ROB or one DIG).
+function isLoud(s) {
+  if (s.you            >= GOAL - 1000) return true;
+  if (s.m              >= GOAL - 1000) return true;
+  if (s.you + s.youVault >= GOAL)      return true;
+  if (s.m   + s.mVault   >= GOAL)      return true;
+  return false;
+}
+
+// Solve a zero-sum matrix game by regret matching.
+// M[i][j] = payoff to ROW (you) = P(you win). Returns value + both mixes.
+function solveMatrix(M, nR, nC, iters) {
+  const rReg = new Float64Array(nR), cReg = new Float64Array(nC);
+  const rSum = new Float64Array(nR), cSum = new Float64Array(nC);
+  const mix = (reg, n) => {
+    const s = new Float64Array(n); let tot = 0;
+    for (let i = 0; i < n; i++) { s[i] = reg[i] > 0 ? reg[i] : 0; tot += s[i]; }
+    if (tot > 0) for (let i = 0; i < n; i++) s[i] /= tot;
+    else        for (let i = 0; i < n; i++) s[i] = 1 / n;
+    return s;
+  };
+  for (let t = 0; t < iters; t++) {
+    const rs = mix(rReg, nR), cs = mix(cReg, nC);
+    for (let i = 0; i < nR; i++) rSum[i] += rs[i];
+    for (let j = 0; j < nC; j++) cSum[j] += cs[j];
+    let v = 0;
+    const u = new Float64Array(nR);
+    for (let i = 0; i < nR; i++) { let a = 0; for (let j = 0; j < nC; j++) a += cs[j] * M[i][j]; u[i] = a; v += rs[i] * a; }
+    for (let i = 0; i < nR; i++) rReg[i] += u[i] - v;
+    let vc = 0;
+    const w = new Float64Array(nC);
+    for (let j = 0; j < nC; j++) { let a = 0; for (let i = 0; i < nR; i++) a += rs[i] * (1 - M[i][j]); w[j] = a; vc += cs[j] * a; }
+    for (let j = 0; j < nC; j++) cReg[j] += w[j] - vc;
+  }
+  let rt = 0, ct = 0;
+  for (let i = 0; i < nR; i++) rt += rSum[i];
+  for (let j = 0; j < nC; j++) ct += cSum[j];
+  const rMix = new Float64Array(nR), cMix = new Float64Array(nC);
+  for (let i = 0; i < nR; i++) rMix[i] = rSum[i] / rt;
+  for (let j = 0; j < nC; j++) cMix[j] = cSum[j] / ct;
+  let val = 0;
+  for (let i = 0; i < nR; i++) for (let j = 0; j < nC; j++) val += rMix[i] * cMix[j] * M[i][j];
+  return { value: val, rowMix: rMix, colMix: cMix };
+}
+
+function actionsFor(s, persp) {
+  const acts = ALL_ACTIONS.filter(a => isLegalRationalFor(s, a, persp));
+  return acts.length ? acts : ['ROB'];
+}
+
+// Build the matrix at s and return its solved game (value + mixes).
+function nashNode(s, depthLeft, memo, iters, qLeft) {
+  if (qLeft === undefined) qLeft = QUIESCENCE_MAX;
+  const rowActs = actionsFor(s, 'you');
+  const colActs = actionsFor(s, 'm');
+  const nR = rowActs.length, nC = colActs.length;
+  const M = [];
+  for (let i = 0; i < nR; i++) {
+    M.push(new Float64Array(nC));
+    for (let j = 0; j < nC; j++) {
+      const r = pureResolve(s, rowActs[i], colActs[j]);
+      let cell;
+      if (r.terminal) {
+        cell = r.you > r.m ? 1 : 0;
+      } else if (depthLeft <= 1) {
+        if (isLoud(r) && qLeft > 0) cell = searchValueNash(r, 1, memo, iters, qLeft - 1);
+        else                        cell = evalLeaf(r);
+      } else {
+        cell = searchValueNash(r, depthLeft - 1, memo, iters, qLeft);
+      }
+      M[i][j] = cell;
+    }
+  }
+  const sol = solveMatrix(M, nR, nC, iters);
+  return { sol, rowActs, colActs };
+}
+
+function searchValueNash(s, depthLeft, memo, iters, qLeft) {
+  if (qLeft === undefined) qLeft = QUIESCENCE_MAX;
+  const key = s.you + ',' + s.youVault + ',' + s.m + ',' + s.mVault + ',' + s.loot + '|' + depthLeft + '|' + qLeft;
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  const { sol } = nashNode(s, depthLeft, memo, iters, qLeft);
+  memo.set(key, sol.value);
+  return sol.value;
+}
+
+// Honest Nash play: solve the current matrix, sample the partner's mix.
+function searchDecide(depth, forbidden) {
+  const memo = new Map();
+  const { sol, colActs } = nashNode(state, depth, memo, RM_ITERS * 2, QUIESCENCE_MAX);
+  let total = 0;
+  for (let j = 0; j < colActs.length; j++) if (colActs[j] !== forbidden) total += sol.colMix[j];
+  if (total <= 0) {
+    for (const a of ALL_ACTIONS) if (a !== forbidden && isLegalRationalFor(state, a, 'm')) return a;
+    return 'ROB';
+  }
+  let rnd = Math.random() * total, acc = 0;
+  for (let j = 0; j < colActs.length; j++) {
+    if (colActs[j] === forbidden) continue;
+    acc += sol.colMix[j];
+    if (rnd <= acc) return colActs[j];
+  }
+  for (let j = colActs.length - 1; j >= 0; j--) if (colActs[j] !== forbidden) return colActs[j];
+  return 'ROB';
+}
+
+// Impossible: AI sees youAct, picks the response that minimizes P(human wins)
+// using N-ply Nash lookahead from the resulting state.
+function cheatDecide(youAct, forbidden) {
+  const pool = ALL_ACTIONS.filter(a => isLegalRationalFor(state, a, 'm') && a !== forbidden);
+  if (pool.length === 0) {
+    for (const a of ALL_ACTIONS) if (a !== forbidden) return a;
+    return 'ROB';
+  }
+  const memo = new Map();
+  let bestA = pool[0], bestScore = Infinity;
+  for (const a of pool) {
+    const r = pureResolve(state, youAct, a);
+    let score;
+    if (r.terminal) {
+      score = r.you > r.m ? 1 : 0;
+    } else {
+      score = searchValueNash(r, IMPOSSIBLE_LOOKAHEAD, memo, RM_ITERS, QUIESCENCE_MAX);
+    }
+    if (score < bestScore) { bestScore = score; bestA = a; }
+  }
+  return bestA;
+}
+
+function partnerDecide(youAct) {
+  let chosen;
+  if (aiDifficulty === 'random')      chosen = randomDecide();
+  else if (aiDifficulty === 'easy')   chosen = searchDecide(1);          // Taxing: 1-ply Nash
+  else if (aiDifficulty === 'medium') chosen = searchDecide(2);          // Troublesome: 2-ply Nash
+  else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct);      // Impossible: cheating
+  else                                chosen = searchDecide(2);
+  // Anti-spam: random threshold so player can't predict when it'll switch.
+  const n = ANTISPAM_MIN + Math.floor(Math.random() * (ANTISPAM_MAX - ANTISPAM_MIN + 1));
+  if (aiRecent.length >= n && aiRecent.slice(-n).every(a => a === chosen)) {
+    if (aiDifficulty === 'random')      chosen = randomDecide(chosen);
+    else if (aiDifficulty === 'easy')   chosen = searchDecide(1, chosen);
+    else if (aiDifficulty === 'medium') chosen = searchDecide(2, chosen);
+    else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct, chosen);
+  }
+  aiRecent.push(chosen);
+  if (aiRecent.length > 10) aiRecent.shift();
+  return chosen;
+}
+
+// ── Resolution producing stages for animation ───────────────────────────
+function resolve(youAct, mAct) {
+  let { you, youVault, m, mVault, loot } = state;
+  const stages = [];
+  let youStashAmt = 0, mStashAmt = 0, youDigAmt = 0, mDigAmt = 0;
+
+  // Returns true if a player has crossed GOAL with a strictly larger hand.
+  // On a hand tie, the round continues until one player's hand exceeds the other's.
+  const push = (label, player, extra) => {
+    stages.push({ you, youVault, m, mVault, loot, label, player, ...(extra || {}) });
+    const youOver = you >= GOAL;
+    const mOver   = m   >= GOAL;
+    if (!youOver && !mOver) return false;
+    if (youOver && !mOver)  return true;
+    if (mOver && !youOver)  return true;
+    return you !== m;  // both over: decisive only if hands differ
+  };
+
+  // 1. ADD — seed $1K if pot is empty, otherwise double.
+  if (youAct === 'ADD') {
+    loot = (loot === 0) ? 1000 : loot * 2;
+    if (push('ADD', 'you')) return stages;
+  }
+  if (mAct === 'ADD') {
+    loot = (loot === 0) ? 1000 : loot * 2;
+    if (push('ADD', 'm')) return stages;
+  }
+
+  // 2. STASH (hand → vault). Track amount moved so SPY can intercept it.
+  if (youAct === 'STASH') {
+    youStashAmt = you;
+    youVault += you; you = 0;
+    if (push('STASH', 'you')) return stages;
+  }
+  if (mAct === 'STASH') {
+    mStashAmt = m;
+    mVault += m; m = 0;
+    if (push('STASH', 'm')) return stages;
+  }
+
+  // 3. ROB — +$1K to hand. Push but DEFER win check (snipe-at-win).
+  if (youAct === 'ROB') {
+    you += 1000;
+    push('ROB', 'you');  // discard return — RAID may snipe this
+  }
+  if (mAct === 'ROB') {
+    m += 1000;
+    push('ROB', 'm');
+  }
+
+  // 4. RAID phase — grabs post-ROB, pre-DIG hand. Vault is always safe.
+  //    RAID-vs-AMBUSH: ambusher catches; takes attacker's hand only.
+  //    RAID-vs-RAID:   hands swap; vaults stay.
+  //    RAID solo:      you += opp's hand; opp's hand → 0.
+  if (youAct === 'RAID' && mAct === 'AMBUSH') {
+    m += you; you = 0;
+    if (push('AMBUSH_CONFISCATE', 'm')) return stages;
+  } else if (mAct === 'RAID' && youAct === 'AMBUSH') {
+    you += m; m = 0;
+    if (push('AMBUSH_CONFISCATE', 'you')) return stages;
+  } else if (youAct === 'RAID' && mAct === 'RAID') {
+    const tmp = you; you = m; m = tmp;
+    if (push('RAID', 'both')) return stages;
+  } else if (youAct === 'RAID') {
+    you += m; m = 0;
+    if (push('RAID', 'you')) return stages;
+  } else if (mAct === 'RAID') {
+    m += you; you = 0;
+    if (push('RAID', 'm')) return stages;
+  }
+
+  // 4.5. Deferred ROB-win check (fires only if the ROBer wasn't RAIDed).
+  {
+    const youRobCaught = (mAct === 'RAID');
+    const mRobCaught   = (youAct === 'RAID');
+    if (youAct === 'ROB' && !youRobCaught && you >= GOAL && you > m) return stages;
+    if (mAct   === 'ROB' && !mRobCaught   && m   >= GOAL && m   > you) return stages;
+  }
+
+  // 5. DIG (vault → hand). Push but DEFER win check.
+  if (youAct === 'DIG') {
+    youDigAmt = youVault;
+    you += youVault; youVault = 0;
+    push('DIG', 'you');
+  }
+  if (mAct === 'DIG') {
+    mDigAmt = mVault;
+    m += mVault; mVault = 0;
+    push('DIG', 'm');
+  }
+
+  // 6. SPY phase — catches the in-flight transfer, takes it to spy's hand.
+  //    SPY-vs-STASH:  buried amount → spy's hand.
+  //    SPY-vs-DIG:    dug amount → spy's hand (snipes a winning DIG).
+  //    SPY-vs-AMBUSH: AMBUSH beats & robs the spy's hand.
+  //    SPY-vs-anything-else: SPY whiffs.
+  if (youAct === 'SPY' && mAct === 'AMBUSH') {
+    m += youVault; youVault = 0;
+    if (push('AMBUSH_CONFISCATE', 'm')) return stages;
+  } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
+    you += mVault; mVault = 0;
+    if (push('AMBUSH_CONFISCATE', 'you')) return stages;
+  } else if (youAct === 'SPY' && mAct === 'STASH') {
+    mVault -= mStashAmt; you += mStashAmt;
+    if (push('SPY_INTERCEPT', 'you', { caught: mStashAmt, target: 'STASH' })) return stages;
+  } else if (mAct === 'SPY' && youAct === 'STASH') {
+    youVault -= youStashAmt; m += youStashAmt;
+    if (push('SPY_INTERCEPT', 'm', { caught: youStashAmt, target: 'STASH' })) return stages;
+  } else if (youAct === 'SPY' && mAct === 'DIG') {
+    m -= mDigAmt; you += mDigAmt;
+    if (push('SPY_INTERCEPT', 'you', { caught: mDigAmt, target: 'DIG' })) return stages;
+  } else if (mAct === 'SPY' && youAct === 'DIG') {
+    you -= youDigAmt; m += youDigAmt;
+    if (push('SPY_INTERCEPT', 'm', { caught: youDigAmt, target: 'DIG' })) return stages;
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    const tmpV = youVault; youVault = mVault; mVault = tmpV;
+    if (push('SPY_SWAP', 'both')) return stages;
+  }
+
+  // 6.5. Deferred DIG-win check (fires only if the DIGger wasn't SPY-sniped).
+  {
+    const youDigCaught = (youAct === 'DIG' && mAct === 'SPY');
+    const mDigCaught   = (mAct   === 'DIG' && youAct === 'SPY');
+    if (youAct === 'DIG' && !youDigCaught && you >= GOAL && you > m) return stages;
+    if (mAct   === 'DIG' && !mDigCaught   && m   >= GOAL && m   > you) return stages;
+  }
+
+  // 7. STEAL phase. Independent of RAID now.
+  {
+    if (youAct === 'STEAL' && mAct === 'GUARD') {
+      m += loot; loot = 0;
+      if (push('GUARD_CONFISCATE', 'm')) return stages;
+    } else if (mAct === 'STEAL' && youAct === 'GUARD') {
+      you += loot; loot = 0;
+      if (push('GUARD_CONFISCATE', 'you')) return stages;
+    } else if (youAct === 'STEAL' && mAct === 'STEAL') {
+      if (push('STEAL', 'both')) return stages;
+    } else if (youAct === 'STEAL') {
+      you += loot; loot = 0;
+      if (push('STEAL', 'you')) return stages;
+    } else if (mAct === 'STEAL') {
+      m += loot; loot = 0;
+      if (push('STEAL', 'm')) return stages;
+    }
+  }
+
+  // 8. Both GUARD splits surviving loot.
+  if (youAct === 'GUARD' && mAct === 'GUARD') {
+    if (loot > 0) {
+      const half = Math.floor(loot / 2);
+      you += half; m += loot - half; loot = 0;
+      if (push('SPLIT', 'both')) return stages;
+    }
+  } else {
+    if (youAct === 'GUARD' && mAct !== 'STEAL' && mAct !== 'RAID') push('GUARD', 'you');
+    if (mAct   === 'GUARD' && youAct !== 'STEAL' && youAct !== 'RAID') push('GUARD', 'm');
+  }
+
+  // 9. Both AMBUSH (no RAID): while both lie in wait, outsiders take the loot.
+  if (youAct === 'AMBUSH' && mAct === 'AMBUSH') {
+    if (loot > 0) {
+      loot = 0;
+      push('OUTSIDERS_AMBUSH', 'both');
+    }
+  } else {
+    if (youAct === 'AMBUSH' && mAct !== 'RAID' && mAct !== 'SPY') push('AMBUSH', 'you');
+    if (mAct   === 'AMBUSH' && youAct !== 'RAID' && youAct !== 'SPY') push('AMBUSH', 'm');
+  }
+
+  if (stages.length === 0) push('NONE');
+
+  return stages;
+}
+
+// ── Play loop ────────────────────────────────────────────────────────────
+function play(youAct) {
+  if (state.locked) return;
+  state.locked = true;
+  document.querySelectorAll('.action-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.id === youAct);
+  });
+
+  if (gameMode === 'friend') {
+    // Send action to peer. If theirs already arrived, resolve. Else wait.
+    pendingYouAct = youAct;
+    sendPeer({ type: 'action', action: youAct });
+    if (pendingMAct !== null) {
+      const mAct = pendingMAct;
+      pendingYouAct = null;
+      pendingMAct = null;
+      hideWaiting();
+      resolveAndAnimate(youAct, mAct);
+    } else {
+      showWaiting();
+    }
+    return;
+  }
+
+  // Machine mode
+  const mAct = partnerDecide(youAct);
+  resolveAndAnimate(youAct, mAct);
+}
+
+function resolveAndAnimate(youAct, mAct) {
+  // Mittens: snapshot pre-resolve state + both actions for training data.
+  mittensLog(
+    youAct, mAct,
+    { you: state.you, youVault: state.youVault, m: state.m, mVault: state.mVault, loot: state.loot },
+    gameMode === 'friend' ? (isHost ? 'you' : 'm') : 'you'
+  );
+  const stages = resolve(youAct, mAct);
+  const STAGE_MS = 280;
+
+  // Show this round's action pair. Persists until the next round overwrites it.
+  showStageLabel(youAct, mAct);
+
+  const playStage = (i) => {
+    if (i >= stages.length) {
+      hideAllIndicators();
+      const final = stages[stages.length - 1];
+      state.you      = final.you;
+      state.youVault = final.youVault;
+      state.m        = final.m;
+      state.mVault   = final.mVault;
+      state.loot     = final.loot;
+
+      // No drip in this variant: loot pot can permanently empty.
+      tickTo('loot-amount', state.loot);
+
+      updateVaultLine('you-vault', state.youVault);
+      updateVaultLine('m-vault', state.mVault);
+      addLog(state.round, youAct, mAct, stages);
+      state.round++;
+      document.getElementById('status').textContent = `Night ${state.round}`;
+      document.querySelectorAll('.action-btn').forEach(b => {
+        b.classList.remove('selected');
+      });
+
+      // Standard win: unburied hand ≥ goal. Larger hand wins.
+      // On a hand tie at GOAL, game continues until one player's hand exceeds the other's.
+      if (state.you >= GOAL && state.m >= GOAL) {
+        if      (state.you > state.m) { endGame('you', youAct, mAct, stages); return; }
+        else if (state.m > state.you) { endGame('m',   youAct, mAct, stages); return; }
+        // hand tie: fall through and resume play
+      } else {
+        if (state.you >= GOAL) { endGame('you', youAct, mAct, stages); return; }
+        if (state.m   >= GOAL) { endGame('m',   youAct, mAct, stages); return; }
+      }
+
+      state.locked = false;
+      return;
+    }
+
+    const s = stages[i];
+    hideAllIndicators();
+
+    if (s.label === 'RAID' || s.label === 'AMBUSH_CONFISCATE') {
+      if (s.player === 'you')        document.getElementById('flow-raid-you').classList.add('show');
+      else if (s.player === 'm')     document.getElementById('flow-raid-mach').classList.add('show');
+      else if (s.player === 'both')  document.getElementById('flow-raid-swap').classList.add('show');
+    } else if (s.label === 'SPY' || s.label === 'SPY_INTERCEPT' || s.label === 'SPY_SWAP') {
+      if (s.player === 'you')        document.getElementById('flow-spy-you').classList.add('show');
+      else if (s.player === 'm')     document.getElementById('flow-spy-mach').classList.add('show');
+      else if (s.player === 'both')  document.getElementById('flow-spy-swap').classList.add('show');
+    } else if (s.label === 'SPY_RAID') {
+      document.getElementById('flow-spy-swap').classList.add('show');
+      document.getElementById('flow-raid-swap').classList.add('show');
+    }
+
+    tickTo('you-amount', s.you);
+    tickTo('m-amount',   s.m);
+    tickTo('loot-amount', s.loot);
+    updateProgress(s.you, s.m);
+    const isVaultEvent = (s.label === 'STASH' || s.label === 'DIG' || s.label === 'SPY' || s.label === 'SPY_INTERCEPT' || s.label === 'SPY_SWAP');
+    updateVaultLine('you-vault', s.youVault, isVaultEvent);
+    updateVaultLine('m-vault',   s.mVault,   isVaultEvent);
+
+    setTimeout(() => playStage(i + 1), i + 1 >= stages.length ? 150 : STAGE_MS);
+  };
+
+  playStage(0);
+}
+
+function roundDescription(youAct, mAct, stages) {
+  // Outsider events take priority.
+  if (stages && stages.some(s => s.label === 'OUTSIDERS_AMBUSH')) {
+    return 'While you both lay in wait, the loot was robbed by outsiders.';
+  }
+
+  // Detect SPY intercepts and SPY whiffs.
+  const findIntercept = (player) => stages ? stages.find(s => s.label === 'SPY_INTERCEPT' && s.player === player) : null;
+  const youIntercept = findIntercept('you');
+  const mIntercept   = findIntercept('m');
+  const youSpyEmpty  = youAct === 'SPY' && !youIntercept && mAct !== 'AMBUSH';
+  const mSpyEmpty    = mAct   === 'SPY' && !mIntercept   && youAct !== 'AMBUSH';
+
+  let base;
+  if (youAct === 'STEAL' && mAct === 'RAID') {
+    base = 'While you were out stealing, your partner raided you.';
+  } else if (mAct === 'STEAL' && youAct === 'RAID') {
+    base = 'While your partner was out stealing, you raided him.';
+  } else if (youAct === 'STEAL' && mAct === 'GUARD') {
+    base = 'You attempted to steal · Your partner took the loot for safekeeping.';
+  } else if (mAct === 'STEAL' && youAct === 'GUARD') {
+    base = 'Your partner attempted to steal · You took the loot for safekeeping.';
+  } else if (youAct === 'RAID' && mAct === 'AMBUSH') {
+    base = 'You attempted to raid your partner, so he beat you and robbed you.';
+  } else if (mAct === 'RAID' && youAct === 'AMBUSH') {
+    base = 'Your partner attempted to raid you, so you beat him and robbed him.';
+  } else if (youAct === 'SPY' && mAct === 'AMBUSH') {
+    base = 'You attempted to spy on your partner, so he beat you and ransacked your treasure.';
+  } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
+    base = 'Your partner attempted to spy on you, so you beat him and ransacked his treasure.';
+  } else if (youAct === 'SPY' && mAct === 'SPY') {
+    base = 'You both spied on each other, and stole each other\'s treasure.';
+  } else if (youIntercept && youIntercept.target === 'STASH') {
+    base = 'You spied on your partner burying treasure · When his back was turned, you made off with it.';
+  } else if (youIntercept && youIntercept.target === 'DIG') {
+    base = 'You spied on your partner digging up treasure · When his back was turned, you made off with it.';
+  } else if (mIntercept && mIntercept.target === 'STASH') {
+    base = 'Your partner spied on you burying treasure · When your back was turned, he made off with it.';
+  } else if (mIntercept && mIntercept.target === 'DIG') {
+    base = 'Your partner spied on you digging up treasure · When your back was turned, he made off with it.';
+  } else if (youAct === 'RAID' && mAct === 'STASH') {
+    base = 'You attempted to raid your partner, but he buried his wealth.';
+  } else if (mAct === 'RAID' && youAct === 'STASH') {
+    base = 'Your partner attempted to raid you, but you buried your wealth.';
+  } else if (youAct === 'STEAL' && mAct === 'STEAL') {
+    base = 'You & your partner both attempted and failed to steal the loot.';
+  } else if (youAct === 'GUARD' && mAct === 'GUARD') {
+    base = 'You both guarded the loot, so agreed to split it.';
+  } else {
+    const youIdx = STAGE_ORDER.indexOf(youAct);
+    const mIdx   = STAGE_ORDER.indexOf(mAct);
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const youPhrase = youSpyEmpty ? 'spied but saw nothing' : PHRASES_YOU[youAct];
+    const mPhrase   = mSpyEmpty   ? 'spied but saw nothing' : PHRASES_M[mAct];
+    const youText = cap(`you ${youPhrase}`);
+    const partnerText = cap(`your partner ${mPhrase}`);
+    base = youIdx <= mIdx ? `${youText} · ${partnerText}` : `${partnerText} · ${youText}`;
+  }
+
+  return base;
+}
+
+function addLog(round, youAct, mAct, stages) {
+  const el = document.getElementById('log');
+
+  // Roll existing rows up and out
+  el.querySelectorAll('.log-row:not(.exit)').forEach(r => {
+    r.classList.remove('latest');
+    r.classList.add('exit');
+    setTimeout(() => r.remove(), 600);
+  });
+
+  // Add new row positioned below, then animate up into place
+  const row = document.createElement('div');
+  row.className = 'log-row latest enter-from';
+  row.innerHTML =
+    `<span class="log-body">${roundDescription(youAct, mAct, stages)}</span>`;
+  el.appendChild(row);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => row.classList.remove('enter-from'));
+  });
+}
+
+function endGame(winner, youAct, mAct, stages) {
+  mittensFinish(winner);
+  document.getElementById('winner-eyebrow').textContent = `Night ${state.round}`;
+  document.getElementById('winner-title').textContent = winner === 'you' ? 'You Win' : 'You Lose';
+
+  document.getElementById('winner-final').textContent = winner === 'you'
+    ? `With $${fmtNumber(state.you)} in your hand, you took off like the wind.`
+    : `With $${fmtNumber(state.m)} in his hand, your partner cut your throat and took off like the wind.`;
+
+  document.getElementById('winner-score-you').textContent = `$${fmtNumber(state.you)}`;
+  document.getElementById('winner-score-m').textContent   = `$${fmtNumber(state.m)}`;
+  document.getElementById('winner-col-you').classList.toggle('is-winner', winner === 'you');
+  document.getElementById('winner-col-m').classList.toggle('is-winner', winner === 'm');
+
+  const roundEl = document.getElementById('winner-round');
+  if (youAct && mAct) {
+    roundEl.textContent = roundDescription(youAct, mAct, stages);
+    roundEl.style.display = '';
+  } else {
+    roundEl.style.display = 'none';
+  }
+
+  const dotsEl = document.getElementById('winner-dots');
+  const btnEl  = document.getElementById('winner-btn');
+  if (gameMode === 'machine') {
+    dotsEl.classList.remove('hidden');
+    btnEl.classList.remove('hidden');
+  } else {
+    dotsEl.classList.add('hidden');
+    btnEl.classList.remove('hidden');
+  }
+
+  document.getElementById('winner-overlay').classList.add('show');
+}
+
+// ── Mode + multiplayer (Supabase Realtime) ────────────────────────────
+// Paste these from your Supabase project: Project Settings → API.
+// The anon key is meant to be public-client-side, safe to commit.
+const SUPABASE_URL = 'https://mtpicepehfzwczcksqjj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_111xIL4mLT6GB-mV7Y0ppA_9-N-lLTJ';
+
+let gameMode = null;            // 'machine' | 'friend'
+let channel = null;             // Supabase Realtime channel
+let isHost = false;
+let partnerSeen = false;
+let gameStarted = false;
+let pendingYouAct = null;
+let pendingMAct   = null;
+
+const _sbConfigured =
+  SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 40;
+const _sb = (_sbConfigured && typeof window.supabase !== 'undefined')
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      realtime: { params: { eventsPerSecond: 20 } }
+    })
+  : null;
+
+// ── Mittens telemetry ──────────────────────────────────────────────────
+// Logs per-turn (state, both actions, winner) to Supabase for later use as
+// training data. Anonymous client UUID, no PII.
+let mittensClientId = localStorage.getItem('mittens-client-id');
+if (!mittensClientId) {
+  mittensClientId = crypto.randomUUID();
+  localStorage.setItem('mittens-client-id', mittensClientId);
+}
+let mittensGameId = null;
+let mittensTurn = 0;
+
+function mittensStart() {
+  if (!_sb) { mittensGameId = null; return; }
+  mittensGameId = crypto.randomUUID();
+  mittensTurn = 0;
+}
+
+function mittensLog(youAct, mAct, snap, humanSide) {
+  if (!mittensGameId || !_sb) return;
+  mittensTurn += 1;
+  _sb.from('bandits_turns').insert({
+    game_id: mittensGameId,
+    turn: mittensTurn,
+    you_hand: snap.you, you_vault: snap.youVault,
+    m_hand: snap.m,    m_vault: snap.mVault,
+    loot: snap.loot,
+    you_action: youAct, m_action: mAct,
+    human_side: humanSide,
+    ai_difficulty: gameMode === 'machine' ? aiDifficulty : null,
+    game_mode: gameMode || 'machine',
+    client_id: mittensClientId,
+  }).then(() => {}, () => {});
+}
+
+function mittensFinish(winner) {
+  if (!mittensGameId || !_sb) return;
+  _sb.from('bandits_turns')
+    .update({ winner })
+    .eq('game_id', mittensGameId)
+    .eq('turn', mittensTurn)
+    .then(() => {}, () => {});
+  mittensGameId = null;
+}
+
+function genRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
+  let s = '';
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+function showView(id) {
+  ['mode-view', 'lobby-view', 'game-view'].forEach(v => {
+    document.getElementById(v).classList.toggle('hidden', v !== id);
+  });
+  // Status ("Night X") only relevant in game
+  document.getElementById('status').classList.toggle('hidden', id !== 'game-view');
+}
+
+let aiDifficulty = 'hard';
+
+function toggleMachineMenu() {
+  // If the rolling tile currently shows a difficulty name (because the user
+  // tapped/hovered a dot), treat the tile click as a launch instead of a toggle.
+  const roll = document.getElementById('machine-tile-roll');
+  const current = roll && roll.querySelector('.tile-row:not(.exit)');
+  const text = current ? current.textContent.trim() : '';
+  const NAME_TO_DIFF = { 'Simple':'random', 'Taxing':'easy', 'Troublesome':'medium', 'Impossible':'hard' };
+  if (NAME_TO_DIFF[text]) {
+    startMachine(NAME_TO_DIFF[text]);
+    return;
+  }
+  document.getElementById('menu-tiles').classList.toggle('expanded');
+}
+
+function startMachine(difficulty) {
+  aiDifficulty = difficulty;
+  gameMode = 'machine';
+  closePeer();
+  showView('game-view');
+  resetGame();
+}
+
+function showLobby() {
+  if (!_sb) {
+    alert('Multiplayer not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in the HTML source.');
+    return;
+  }
+  showView('lobby-view');
+  document.getElementById('lobby-menu').classList.remove('hidden');
+  document.getElementById('lobby-create').classList.add('hidden');
+  document.getElementById('lobby-join').classList.add('hidden');
+}
+
+function backToMode() {
+  closePeer();
+  gameMode = null;
+  showView('mode-view');
+}
+
+function showJoin() {
+  document.getElementById('lobby-menu').classList.add('hidden');
+  document.getElementById('lobby-join').classList.remove('hidden');
+  setJoinStatus('', '');
+  setTimeout(() => document.getElementById('lobby-join-input').focus(), 100);
+}
+
+function openChannel(code, asHost) {
+  isHost = asHost;
+  partnerSeen = false;
+  gameStarted = false;
+  const presenceKey = asHost ? 'host' : 'joiner';
+
+  channel = _sb.channel('bandits-' + code, {
+    config: {
+      broadcast: { self: false },
+      presence: { key: presenceKey }
+    }
+  });
+
+  channel
+    .on('presence', { event: 'sync' }, () => {
+      const st = channel.presenceState();
+      const partnerHere = Object.keys(st).some(k => k !== presenceKey);
+      if (partnerHere && !partnerSeen) {
+        partnerSeen = true;
+        if (asHost) {
+          setCreateStatus('Partner connected', 'ok');
+          sendPeer({ type: 'start' });
+          startFriendGame();
+        }
+      } else if (!partnerHere && gameStarted) {
+        state.locked = true;
+        showStageLabel('PARTNER DISCONNECTED');
+      }
+    })
+    .on('broadcast', { event: 'msg' }, ({ payload }) => onPeerData(payload))
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({ joined_at: Date.now() });
+        if (asHost) setCreateStatus('Waiting for partner', 'ok');
+        else setJoinStatus('Connected, waiting for game', 'ok');
+      } else if (status === 'CHANNEL_ERROR') {
+        if (asHost) setCreateStatus('Connection error', 'error');
+        else setJoinStatus('Connection error', 'error');
+      } else if (status === 'TIMED_OUT') {
+        if (asHost) setCreateStatus('Connection timed out', 'error');
+        else setJoinStatus('Connection timed out', 'error');
+      }
+    });
+}
+
+function createRoom() {
+  document.getElementById('lobby-menu').classList.add('hidden');
+  document.getElementById('lobby-create').classList.remove('hidden');
+  const code = genRoomCode();
+  document.getElementById('lobby-code').textContent = code;
+  setCreateStatus('Connecting', 'ok');
+  openChannel(code, true);
+}
+
+function joinRoom() {
+  const code = document.getElementById('lobby-join-input').value.toUpperCase().trim();
+  if (code.length !== 4) {
+    setJoinStatus('Need a 4-character code', 'error');
+    return;
+  }
+  setJoinStatus('Connecting', 'ok');
+  openChannel(code, false);
+}
+
+function startFriendGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+  gameMode = 'friend';
+  showView('game-view');
+  resetGame();
+}
+
+function onPeerData(data) {
+  if (!data || typeof data !== 'object') return;
+  if (data.type === 'start') {
+    startFriendGame();
+    return;
+  }
+  if (data.type === 'action') {
+    onPeerAction(data.action);
+    return;
+  }
+  if (data.type === 'restart') {
+    doReset();
+    return;
+  }
+}
+
+function onPeerAction(mAct) {
+  if (pendingYouAct !== null) {
+    const youAct = pendingYouAct;
+    pendingYouAct = null;
+    pendingMAct = null;
+    hideWaiting();
+    resolveAndAnimate(youAct, mAct);
+  } else {
+    pendingMAct = mAct;
+  }
+}
+
+function sendPeer(msg) {
+  if (channel) {
+    try {
+      channel.send({ type: 'broadcast', event: 'msg', payload: msg });
+    } catch (e) {}
+  }
+}
+
+function closePeer() {
+  if (channel) {
+    try { channel.untrack(); } catch (e) {}
+    try { _sb.removeChannel(channel); } catch (e) {}
+  }
+  channel = null;
+  isHost = false;
+  partnerSeen = false;
+  gameStarted = false;
+  pendingYouAct = null;
+  pendingMAct = null;
+}
+
+function setCreateStatus(text, cls) {
+  const el = document.getElementById('lobby-create-status');
+  el.textContent = text;
+  el.className = 'lobby-status ' + (cls || '');
+}
+function setJoinStatus(text, cls) {
+  const el = document.getElementById('lobby-join-status');
+  el.textContent = text;
+  el.className = 'lobby-status ' + (cls || '');
+}
+
+function showWaiting() {
+  const grid = document.getElementById('action-grid');
+  grid.classList.add('waiting');
+  let wait = document.getElementById('wait-line');
+  if (!wait) {
+    wait = document.createElement('div');
+    wait.id = 'wait-line';
+    wait.className = 'wait-line';
+    grid.parentNode.insertBefore(wait, grid.nextSibling);
+  }
+  wait.textContent = 'Waiting for partner';
+}
+function hideWaiting() {
+  document.getElementById('action-grid').classList.remove('waiting');
+  const wait = document.getElementById('wait-line');
+  if (wait) wait.textContent = '';
+}
+
+// Play-again wrapper: in friend mode, sync the restart over peer
+function playAgain() {
+  if (gameMode === 'friend') sendPeer({ type: 'restart' });
+  doReset();
+}
+// Pick a new difficulty from the winner-overlay dots, then restart.
+function playAgainAt(difficulty) {
+  aiDifficulty = difficulty;
+  doReset();
+}
+function doReset() {
+  pendingYouAct = null;
+  pendingMAct = null;
+  hideWaiting();
+  resetGame();
+}
+
+// Roll text inside a tile-roll element (log-style vertical animation).
+function rollTile(rollEl, text) {
+  if (!rollEl) return;
+  const current = rollEl.querySelector('.tile-row:not(.exit)');
+  if (current && current.textContent === text) return;
+  if (current) {
+    current.classList.remove('latest');
+    current.classList.add('exit');
+    setTimeout(() => { if (current.parentElement) current.remove(); }, 500);
+  }
+  const row = document.createElement('span');
+  row.className = 'tile-row latest enter-from';
+  row.textContent = text;
+  rollEl.appendChild(row);
+  requestAnimationFrame(() => requestAnimationFrame(() => row.classList.remove('enter-from')));
+}
+function rollDefault(rollEl) { if (rollEl) rollTile(rollEl, rollEl.dataset.default); }
+function getTileRollFor(dot) {
+  const container = dot.closest('.diff-dots, .winner-dots');
+  if (!container) return null;
+  return container.classList.contains('diff-dots')
+    ? document.getElementById('machine-tile-roll')
+    : document.getElementById('winner-tile-roll');
+}
+// Desktop: hover previews. Touch: first tap previews, second tap launches.
+const isTouchDevice = matchMedia('(hover: none)').matches;
+let armedDot = null;
+let armedTimer = null;
+function disarm() {
+  armedDot = null;
+  if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
+}
+document.querySelectorAll('.diff-dot').forEach(dot => {
+  const tileRoll = getTileRollFor(dot);
+  if (!tileRoll) return;
+  dot.addEventListener('mouseenter', () => rollTile(tileRoll, dot.dataset.name));
+  dot.addEventListener('mouseleave', () => { if (!isTouchDevice) rollDefault(tileRoll); });
+  // Touchstart fallback — guarantees the name flashes on touch even if (hover:none)
+  // detection fails (e.g. touch-screen laptops, hybrid devices).
+  dot.addEventListener('touchstart', () => rollTile(tileRoll, dot.dataset.name), { passive: true });
+  if (isTouchDevice) {
+    dot.addEventListener('click', (e) => {
+      if (armedDot === dot) { disarm(); return; }
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      rollTile(tileRoll, dot.dataset.name);
+      armedDot = dot;
+      if (armedTimer) clearTimeout(armedTimer);
+      armedTimer = setTimeout(() => {
+        if (armedDot === dot) { armedDot = null; rollDefault(tileRoll); }
+        armedTimer = null;
+      }, 3000);
+    }, true);
+  }
+});
+
+// Theme: pure-inversion light mode toggle, persisted across sessions.
+function applyTheme(theme) {
+  if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  try { localStorage.setItem('bandits-theme', next); } catch(e) {}
+}
+// Enter key advances the tutorial: Begin from intro screen, Next during steps.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  if (document.body.classList.contains('tut-intro-mode')) {
+    e.preventDefault();
+    tutorialBegin();
+  } else if (document.body.classList.contains('tutorial')) {
+    e.preventDefault();
+    tutorialNext();
+  }
+});
+
+(function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem('bandits-theme'); } catch(e) {}
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+})();
+
+// Initial view: mode select
+showView('mode-view');
+// ── Tutorial mode ─────────────────────────────────────────────────────────
+const TUTORIAL_STEPS = [
+  { id:'ADD',
+    setup:{ you:0, youVault:0, m:0, mVault:0, loot:0 },
+    caption:'ADD builds up the loot pile. Tap it to add $1,000.',
+    taps:[
+      { apply:(s)=>{ s.loot = 1000; }, explain:'<span class="tut-explain">Added $1,000.</span> Tap again.' },
+      { apply:(s)=>{ s.loot = 2000; }, explain:'<span class="tut-explain">Doubled to $2,000.</span> Tap again.' },
+      { apply:(s)=>{ s.loot = 4000; }, explain:'<span class="tut-explain">Doubled to $4,000.</span>' },
+    ] },
+
+  { id:'STEAL',
+    setup:{ you:0, youVault:0, m:0, mVault:0, loot:4000 },
+    caption:'STEAL takes the whole loot pile into your hand.',
+    apply:(s)=>{ s.you += s.loot; s.loot = 0; },
+    explain:'<span class="tut-explain">You took the $4,000 loot into your hand.</span>' },
+
+  { id:'RAID',
+    setup:{ you:0, youVault:0, m:5000, mVault:0, loot:1000 },
+    caption:'RAID takes your partner\u2019s hand into yours.',
+    apply:(s)=>{ s.you += s.m; s.m = 0; },
+    explain:'<span class="tut-explain">You raided $5,000 from your partner.</span>' },
+
+  { id:'STASH',
+    setup:{ you:5000, youVault:0, m:0, mVault:0, loot:1000 },
+    caption:'STASH buries your hand as treasure. Safe from RAID.',
+    apply:(s)=>{ s.youVault += s.you; s.you = 0; },
+    explain:'<span class="tut-explain">Your $5,000 is buried. RAID can\u2019t touch it.</span>' },
+
+  { id:'DIG',
+    setup:{ you:0, youVault:5000, m:0, mVault:0, loot:1000 },
+    caption:'DIG brings buried treasure back into your hand.',
+    apply:(s)=>{ s.you += s.youVault; s.youVault = 0; },
+    explain:'<span class="tut-explain">You dug up your $5,000, into your hand.</span>' },
+
+  { id:'ROB',
+    setup:{ you:0, youVault:0, m:0, mVault:0, loot:1000 },
+    caption:'ROB puts $1,000 in your hand, taken from a local.',
+    apply:(s)=>{ s.you += 1000; },
+    explain:'<span class="tut-explain">You robbed a local for $1,000.</span>' },
+
+  { id:'SPY',
+    setup:{ you:0, youVault:0, m:0, mVault:3000, loot:1000 },
+    caption:'SPY watches your partner close. If he plays STASH or DIGs treasure, you steal it.',
+    apply:(s)=>{ s.you += s.mVault; s.mVault = 0; },
+    explain:'<span class="tut-explain">He tried to DIG up $3,000. You were watching, and took it.</span>' },
+
+  { id:'GUARD',
+    setup:{ you:0, youVault:0, m:0, mVault:0, loot:8000 },
+    caption:'GUARD guards the loot. If your partner tries to STEAL it, you take it instead.',
+    apply:(s)=>{ s.you += s.loot; s.loot = 0; },
+    explain:'<span class="tut-explain">He tried to steal the $8,000 loot. You guarded it and took it yourself.</span>' },
+
+  { id:'AMBUSH',
+    setup:{ you:3000, youVault:0, m:6000, mVault:0, loot:1000 },
+    caption:'AMBUSH lies in wait. If your partner RAIDs you, you flip it and take their hand.',
+    apply:(s)=>{ s.you += s.m; s.m = 0; },
+    explain:'<span class="tut-explain">He RAIDed, but you were ready for him. You took his $6,000.</span>' },
+];
+
+let tutorialStep = -1;
+let tutorialTapIndex = 0;
+
+function startTutorial() {
+  gameMode = 'tutorial';
+  closePeer && closePeer();
+  document.body.classList.add('tutorial');
+  document.body.classList.add('tut-intro-mode');
+  showView('game-view');
+  document.getElementById('winner-overlay').classList.remove('show');
+  document.getElementById('log').innerHTML = '';
+  clearStageLabel();
+  hideAllIndicators();
+  tutorialStep = -1;
+}
+
+function tutorialBegin() {
+  document.body.classList.remove('tut-intro-mode');
+  tutorialStep = 0;
+  renderTutorialStep();
+}
+
+function exitTutorial() {
+  document.body.classList.remove('tutorial');
+  document.body.classList.remove('tut-intro-mode');
+  document.getElementById('tutorial-caption').classList.remove('show');
+  tutorialStep = -1;
+  gameMode = null;
+  showView('mode-view');
+}
+
+function tutorialSteps_seq(step) {
+  return step.taps || [{ apply: step.apply, explain: step.explain }];
+}
+
+function renderTutorialStep() {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  tutorialTapIndex = 0;
+  // Set the board to the scenario, instantly.
+  state = Object.assign({ round: tutorialStep + 1, locked: false }, step.setup);
+  ['you-amount','m-amount','loot-amount'].forEach(id => {
+    const el = document.getElementById(id);
+    el.dataset.value = ''; el.dataset.lastStr = '';
+  });
+  hideAllIndicators();
+  updateDisplay(true);
+
+  // Caption (instructional).
+  const cap = document.getElementById('tutorial-caption');
+  cap.classList.add('show');
+  cap.innerHTML = step.caption;
+
+  // Action grid: only the current action live, the rest black/hidden.
+  const grid = document.getElementById('action-grid');
+  grid.innerHTML = '';
+  ACTIONS.forEach(a => {
+    const btn = document.createElement('button');
+    const live = (a.id === step.id);
+    btn.className = 'action-btn' + (a.full ? ' full' : '') + (live ? ' tut-live' : ' tut-dim');
+    btn.dataset.id = a.id;
+    btn.innerHTML = `<span class="action-name">${a.name}</span><span class="action-desc">${a.desc}</span>`;
+    if (live) btn.onclick = () => tutorialTap(a.id);
+    grid.appendChild(btn);
+  });
+
+  // Counter + arrow states.
+  document.getElementById('tutorial-progress').textContent =
+    `${tutorialStep + 1} / ${TUTORIAL_STEPS.length}`;
+  document.getElementById('tut-back').disabled = (tutorialStep === 0);
+  document.getElementById('tut-fwd').disabled  = (tutorialStep === TUTORIAL_STEPS.length - 1);
+  document.getElementById('tutorial-next').textContent = (tutorialStep === TUTORIAL_STEPS.length - 1) ? 'Finish' : 'Next';
+}
+
+function tutorialTap(id) {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  if (id !== step.id) return;
+  const seq = tutorialSteps_seq(step);
+  if (tutorialTapIndex >= seq.length) return;
+
+  const cur = seq[tutorialTapIndex];
+  cur.apply(state);
+  updateDisplay(false);
+  tutorialTapIndex++;
+
+  const cap = document.getElementById('tutorial-caption');
+  cap.innerHTML = cur.explain;
+
+  // If this was the final tap of the step, retire the button.
+  if (tutorialTapIndex >= seq.length) {
+    document.querySelectorAll('.action-btn').forEach(b => {
+      b.classList.remove('tut-live');
+      b.onclick = null;
+      b.classList.add('tut-dim');
+    });
+  }
+}
+
+function tutorialBack() {
+  if (tutorialStep <= 0) return;
+  tutorialStep--;
+  renderTutorialStep();
+}
+
+function tutorialForward() {
+  if (tutorialStep >= TUTORIAL_STEPS.length - 1) return;
+  tutorialStep++;
+  renderTutorialStep();
+}
+
+function tutorialNext() {
+  if (tutorialStep >= TUTORIAL_STEPS.length - 1) { exitTutorial(); return; }
+  tutorialStep++;
+  renderTutorialStep();
+}
+
+</script>
+</body>
+</html>
