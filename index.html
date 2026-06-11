@@ -43,6 +43,35 @@
       --overlay-30: rgba(245,245,240,0.30);
     }
 
+  /* Light mode — pure inversion of every dark-mode value */
+  :root[data-theme="light"] {
+      --bg: #f5f5f5;
+      --bg-active: #ededed;
+      --text-bright: #000000;
+      --text: #0a0a0f;
+      --text-2: #3f3f3f;
+      --text-3: #4f4f4f;
+      --text-4: #5f5f5f;
+      --text-5: #656567;
+      --text-6: #757577;
+      --text-mute: #858587;
+      --text-dim: #959597;
+      --text-arrow: #a5a5a7;
+      --text-fade: #b5b5b7;
+      --text-faint: #c5c5c7;
+      --text-disabled: #888;
+      --warn: #c46b6b;
+      --bg-modal: rgba(247, 247, 247, 0.97);
+      --overlay-04: rgba(10,10,15,0.04);
+      --overlay-06: rgba(10,10,15,0.06);
+      --overlay-08: rgba(10,10,15,0.08);
+      --overlay-10: rgba(10,10,15,0.10);
+      --overlay-12: rgba(10,10,15,0.12);
+      --overlay-14: rgba(10,10,15,0.14);
+      --overlay-15: rgba(10,10,15,0.15);
+      --overlay-30: rgba(10,10,15,0.30);
+    }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { overflow-x: hidden; overscroll-behavior: none; }
   body {
@@ -117,8 +146,8 @@
   body.tutorial .log { display: none; }
   body.tutorial .status { display: none; }
   .action-btn.tut-dim { pointer-events: none; background: var(--bg); }
-  .action-btn.tut-dim .action-name,
-  .action-btn.tut-dim .action-desc { visibility: hidden; }
+  .action-btn.tut-dim .action-name { color: var(--text-faint); }
+  .action-btn.tut-dim .action-desc { color: var(--text-faint); opacity: 0.55; }
   .action-btn.tut-live {
     box-shadow: inset 0 0 0 1px var(--text);
     animation: tut-pulse 1.4s ease-in-out infinite;
@@ -271,6 +300,32 @@
     inset: -11px;
   }
   .info-btn-icon:active {
+    color: var(--text);
+    border-color: var(--text);
+  }
+  .theme-toggle {
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--text-5);
+    cursor: pointer;
+    line-height: 19px;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -11px;
+  }
+  .theme-toggle:active {
     color: var(--text);
     border-color: var(--text);
   }
@@ -1028,6 +1083,7 @@
   <div class="title-row">
     <div class="title">BANDITS</div>
     <button class="info-btn-icon" onclick="showInfo()" aria-label="Info">i</button>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
     <div class="status" id="status">Night 1</div>
   </div>
   <div class="subtitle-row">
@@ -1090,7 +1146,7 @@
     <div class="info-section">
       <div class="info-heading">How to win</div>
       <div class="info-body">
-        First to $20,000 in hand wins.<br>
+        The first to make 20k wins.<br>
         Buried treasure doesn't count until dug up.
       </div>
     </div>
@@ -1185,7 +1241,7 @@
     <div class="info-section">
       <div class="info-heading">How to win</div>
       <div class="info-body">
-        First to $20,000 in hand wins.<br>
+        The first to make 20k wins.<br>
         Buried treasure doesn't count until dug up.
       </div>
     </div>
@@ -1196,7 +1252,7 @@
         <div class="row"><div class="row-name">Steal</div><div class="row-desc">Transfers the loot to your hand.</div></div>
         <div class="row"><div class="row-name">Raid</div><div class="row-desc">Transfers your opponent's hand to your hand.</div></div>
         <div class="row"><div class="row-name">Rob</div><div class="row-desc">Adds $1,000 to your hand.</div></div>
-        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand..</div></div>
+        <div class="row"><div class="row-name">Spy</div><div class="row-desc">Catch a Stash or Dig. Take the treasure to your hand. Two Spies swap vaults.</div></div>
         <div class="row"><div class="row-name">Stash</div><div class="row-desc">Buries your hand. Buried treasure is safe from Raid &amp; Ambush.</div></div>
         <div class="row"><div class="row-name">Dig</div><div class="row-desc">Unearths buried treasure to your hand.</div></div>
         <div class="row"><div class="row-name">Guard</div><div class="row-desc">Defends against Steal. Two Guards split the loot.</div></div>
@@ -1233,10 +1289,10 @@ const ACTIONS = [
   { id: 'ADD',    name: 'ADD',      desc: 'Add or double loot',  full: true },
   { id: 'STEAL',  name: 'STEAL',    desc: 'Take the loot' },
   { id: 'RAID',   name: 'RAID',     desc: 'Steal his wealth' },
-  { id: 'ROB',    name: 'ROB',      desc: 'Rob a local' },
-  { id: 'SPY',    name: 'SPY',      desc: 'Watch him close' },
   { id: 'STASH',  name: 'STASH',    desc: 'Bury treasure' },
   { id: 'DIG',    name: 'DIG',      desc: 'Dig up treasure' },
+  { id: 'ROB',    name: 'ROB',      desc: 'Rob a local' },
+  { id: 'SPY',    name: 'SPY',      desc: 'Watch him close' },
   { id: 'GUARD',  name: 'GUARD',    desc: 'Guard the loot' },
   { id: 'AMBUSH', name: 'AMBUSH',   desc: 'Lay in wait' },
 ];
@@ -1535,10 +1591,10 @@ function pureResolve(s, youAct, mAct) {
     mStashAmt = m; mVault += m; m = 0;
     const w = term(); if (w) return w;
   }
-  // 3. ROB — +$1K to hand. Win check immediate.
-  if (youAct === 'ROB') { you += 1000; const w = term(); if (w) return w; }
-  if (mAct   === 'ROB') { m += 1000; const w = term(); if (w) return w; }
-  // 4. RAID — grabs post-ROB, pre-DIG hand. Vault is safe.
+  // 3. ROB — +$1K to hand. Win check DEFERRED (snipe-at-win).
+  if (youAct === 'ROB') { you += 1000; }
+  if (mAct   === 'ROB') { m += 1000; }
+  // 4. RAID — grabs post-ROB hand. Vault is safe. Can snipe a winning ROB.
   if (youAct === 'RAID' && mAct === 'AMBUSH') {
     m += you; you = 0; const w = term(); if (w) return w;
   } else if (mAct === 'RAID' && youAct === 'AMBUSH') {
@@ -1550,16 +1606,21 @@ function pureResolve(s, youAct, mAct) {
   } else if (mAct === 'RAID') {
     m += you; you = 0; const w = term(); if (w) return w;
   }
-  // 5. DIG (vault → hand). Win check fires immediately — SPY cannot intercept a winning DIG.
+  // 4.5. Deferred ROB-win check: only fires if ROBer wasn't RAIDed.
+  {
+    const youRobCaught = (mAct === 'RAID');
+    const mRobCaught   = (youAct === 'RAID');
+    if (youAct === 'ROB' && !youRobCaught) { const w = term(); if (w) return w; }
+    if (mAct   === 'ROB' && !mRobCaught)   { const w = term(); if (w) return w; }
+  }
+  // 5. DIG (vault → hand). Win check DEFERRED (snipe-at-win).
   if (youAct === 'DIG') {
     youDigAmt = youVault; you += youVault; youVault = 0;
-    const w = term(); if (w) return w;
   }
   if (mAct === 'DIG') {
     mDigAmt = mVault; m += mVault; mVault = 0;
-    const w = term(); if (w) return w;
   }
-  // 6. SPY phase — catches STASH or DIG transit (non-winning only).
+  // 6. SPY phase — catches STASH or DIG transit. Can snipe a winning DIG.
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
     m += you; you = 0; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
@@ -1575,6 +1636,13 @@ function pureResolve(s, youAct, mAct) {
   } else if (youAct === 'SPY' && mAct === 'SPY') {
     const tmpV = youVault; youVault = mVault; mVault = tmpV;
     // vault swap doesn't change hands; no terminal check
+  }
+  // 6.5. Deferred DIG-win check: only fires if DIGger wasn't SPY-sniped.
+  {
+    const youDigCaught = (youAct === 'DIG' && mAct === 'SPY');
+    const mDigCaught   = (mAct   === 'DIG' && youAct === 'SPY');
+    if (youAct === 'DIG' && !youDigCaught) { const w = term(); if (w) return w; }
+    if (mAct   === 'DIG' && !mDigCaught)   { const w = term(); if (w) return w; }
   }
   // 7. STEAL
   if (youAct === 'STEAL' && mAct === 'GUARD') {
@@ -1765,9 +1833,9 @@ function cheatDecide(youAct, forbidden) {
 function partnerDecide(youAct) {
   let chosen;
   if (aiDifficulty === 'random')      chosen = randomDecide();
-  else if (aiDifficulty === 'easy')   chosen = searchDecide(1);          // Taxing: myopic Nash
+  else if (aiDifficulty === 'easy')   chosen = searchDecide(1);          // Taxing: 1-ply Nash
   else if (aiDifficulty === 'medium') chosen = searchDecide(2);          // Troublesome: 2-ply Nash
-  else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct);      // Impossible
+  else if (aiDifficulty === 'hard')   chosen = cheatDecide(youAct);      // Impossible: cheating
   else                                chosen = searchDecide(2);
   // Anti-spam: random threshold so player can't predict when it'll switch.
   const n = ANTISPAM_MIN + Math.floor(Math.random() * (ANTISPAM_MAX - ANTISPAM_MIN + 1));
@@ -1822,14 +1890,14 @@ function resolve(youAct, mAct) {
     if (push('STASH', 'm')) return stages;
   }
 
-  // 3. ROB — +$1K to hand. Win check immediate.
+  // 3. ROB — +$1K to hand. Push but DEFER win check (snipe-at-win).
   if (youAct === 'ROB') {
     you += 1000;
-    if (push('ROB', 'you')) return stages;
+    push('ROB', 'you');  // discard return — RAID may snipe this
   }
   if (mAct === 'ROB') {
     m += 1000;
-    if (push('ROB', 'm')) return stages;
+    push('ROB', 'm');
   }
 
   // 4. RAID phase — grabs post-ROB, pre-DIG hand. Vault is always safe.
@@ -1853,21 +1921,29 @@ function resolve(youAct, mAct) {
     if (push('RAID', 'm')) return stages;
   }
 
-  // 5. DIG (vault → hand). Win check fires immediately — SPY cannot intercept a winning DIG.
+  // 4.5. Deferred ROB-win check (fires only if the ROBer wasn't RAIDed).
+  {
+    const youRobCaught = (mAct === 'RAID');
+    const mRobCaught   = (youAct === 'RAID');
+    if (youAct === 'ROB' && !youRobCaught && you >= GOAL && you > m) return stages;
+    if (mAct   === 'ROB' && !mRobCaught   && m   >= GOAL && m   > you) return stages;
+  }
+
+  // 5. DIG (vault → hand). Push but DEFER win check.
   if (youAct === 'DIG') {
     youDigAmt = youVault;
     you += youVault; youVault = 0;
-    if (push('DIG', 'you')) return stages;
+    push('DIG', 'you');
   }
   if (mAct === 'DIG') {
     mDigAmt = mVault;
     m += mVault; mVault = 0;
-    if (push('DIG', 'm')) return stages;
+    push('DIG', 'm');
   }
 
   // 6. SPY phase — catches the in-flight transfer, takes it to spy's hand.
   //    SPY-vs-STASH:  buried amount → spy's hand.
-  //    SPY-vs-DIG:    dug amount → spy's hand (non-winning DIGs only).
+  //    SPY-vs-DIG:    dug amount → spy's hand (snipes a winning DIG).
   //    SPY-vs-AMBUSH: AMBUSH beats & robs the spy's hand.
   //    SPY-vs-anything-else: SPY whiffs.
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
@@ -1891,6 +1967,14 @@ function resolve(youAct, mAct) {
   } else if (youAct === 'SPY' && mAct === 'SPY') {
     const tmpV = youVault; youVault = mVault; mVault = tmpV;
     if (push('SPY_SWAP', 'both')) return stages;
+  }
+
+  // 6.5. Deferred DIG-win check (fires only if the DIGger wasn't SPY-sniped).
+  {
+    const youDigCaught = (youAct === 'DIG' && mAct === 'SPY');
+    const mDigCaught   = (mAct   === 'DIG' && youAct === 'SPY');
+    if (youAct === 'DIG' && !youDigCaught && you >= GOAL && you > m) return stages;
+    if (mAct   === 'DIG' && !mDigCaught   && m   >= GOAL && m   > you) return stages;
   }
 
   // 7. STEAL phase. Independent of RAID now.
@@ -2520,6 +2604,23 @@ document.querySelectorAll('.diff-dot').forEach(dot => {
   }
 });
 
+// Theme: pure-inversion light mode toggle, persisted across sessions.
+function applyTheme(theme) {
+  if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  try { localStorage.setItem('bandits-theme', next); } catch(e) {}
+}
+(function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem('bandits-theme'); } catch(e) {}
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+})();
+
 // Initial view: mode select
 showView('mode-view');
 // ── Tutorial mode ─────────────────────────────────────────────────────────
@@ -2557,6 +2658,18 @@ const TUTORIAL_STEPS = [
     apply:(s)=>{ s.you += s.youVault; s.youVault = 0; },
     explain:'<span class="tut-explain">You dug up your $5,000, into your hand.</span>' },
 
+  { id:'ROB',
+    setup:{ you:0, youVault:0, m:0, mVault:0, loot:1000 },
+    caption:'ROB puts $1,000 in your hand, taken from a local.',
+    apply:(s)=>{ s.you += 1000; },
+    explain:'<span class="tut-explain">You robbed a local for $1,000.</span>' },
+
+  { id:'SPY',
+    setup:{ you:0, youVault:0, m:0, mVault:3000, loot:1000 },
+    caption:'SPY watches your partner close. If he plays STASH or DIGs treasure, you steal it.',
+    apply:(s)=>{ s.you += s.mVault; s.mVault = 0; },
+    explain:'<span class="tut-explain">He tried to DIG up $3,000. You were watching, and took it.</span>' },
+
   { id:'GUARD',
     setup:{ you:0, youVault:0, m:0, mVault:0, loot:8000 },
     caption:'GUARD guards the loot. If your partner tries to STEAL it, you take it instead.',
@@ -2568,18 +2681,6 @@ const TUTORIAL_STEPS = [
     caption:'AMBUSH lies in wait. If your partner RAIDs you, you flip it and take their hand.',
     apply:(s)=>{ s.you += s.m; s.m = 0; },
     explain:'<span class="tut-explain">He RAIDed, but you were ready for him. You took his $6,000.</span>' },
-
-  { id:'SPY',
-    setup:{ you:0, youVault:0, m:0, mVault:3000, loot:1000 },
-    caption:'SPY watches your partner close. If he plays STASH or DIGs treasure, you steal it.',
-    apply:(s)=>{ s.you += s.mVault; s.mVault = 0; },
-    explain:'<span class="tut-explain">He tried to DIG up $3,000. You were watching, and took it.</span>' },
-
-  { id:'ROB',
-    setup:{ you:0, youVault:0, m:0, mVault:0, loot:1000 },
-    caption:'ROB puts $1,000 in your hand, taken from a local.',
-    apply:(s)=>{ s.you += 1000; },
-    explain:'<span class="tut-explain">You robbed a local for $1,000.</span>' },
 ];
 
 let tutorialStep = -1;
