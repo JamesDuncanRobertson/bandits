@@ -1622,9 +1622,9 @@ function pureResolve(s, youAct, mAct) {
   }
   // 6. SPY phase — catches STASH or DIG transit. Can snipe a winning DIG.
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
-    m += you; you = 0; const w = term(); if (w) return w;
+    m += youVault; youVault = 0; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
-    you += m; m = 0; const w = term(); if (w) return w;
+    you += mVault; mVault = 0; const w = term(); if (w) return w;
   } else if (youAct === 'SPY' && mAct === 'STASH') {
     mVault -= mStashAmt; you += mStashAmt; const w = term(); if (w) return w;
   } else if (mAct === 'SPY' && youAct === 'STASH') {
@@ -1947,10 +1947,10 @@ function resolve(youAct, mAct) {
   //    SPY-vs-AMBUSH: AMBUSH beats & robs the spy's hand.
   //    SPY-vs-anything-else: SPY whiffs.
   if (youAct === 'SPY' && mAct === 'AMBUSH') {
-    m += you; you = 0;
+    m += youVault; youVault = 0;
     if (push('AMBUSH_CONFISCATE', 'm')) return stages;
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
-    you += m; m = 0;
+    you += mVault; mVault = 0;
     if (push('AMBUSH_CONFISCATE', 'you')) return stages;
   } else if (youAct === 'SPY' && mAct === 'STASH') {
     mVault -= mStashAmt; you += mStashAmt;
@@ -2156,13 +2156,13 @@ function roundDescription(youAct, mAct, stages) {
   } else if (mAct === 'STEAL' && youAct === 'GUARD') {
     base = 'Your partner attempted to steal · You took the loot for safekeeping.';
   } else if (youAct === 'RAID' && mAct === 'AMBUSH') {
-    base = 'You attempted to raid your partner so he beat you and robbed you.';
+    base = 'You attempted to raid your partner, so he beat you and robbed you.';
   } else if (mAct === 'RAID' && youAct === 'AMBUSH') {
-    base = 'Your partner attempted to raid you so you beat him and robbed him.';
+    base = 'Your partner attempted to raid you, so you beat him and robbed him.';
   } else if (youAct === 'SPY' && mAct === 'AMBUSH') {
-    base = 'You attempted to spy on your partner · He beat you and robbed you.';
+    base = 'You attempted to spy on your partner, so he beat you and ransacked your treasure.';
   } else if (mAct === 'SPY' && youAct === 'AMBUSH') {
-    base = 'Your partner attempted to spy on you · You beat him and robbed him.';
+    base = 'Your partner attempted to spy on you, so you beat him and ransacked his treasure.';
   } else if (youAct === 'SPY' && mAct === 'SPY') {
     base = 'You both spied on each other, and stole each other\'s treasure.';
   } else if (youIntercept && youIntercept.target === 'STASH') {
@@ -2615,6 +2615,18 @@ function toggleTheme() {
   applyTheme(next);
   try { localStorage.setItem('bandits-theme', next); } catch(e) {}
 }
+// Enter key advances the tutorial: Begin from intro screen, Next during steps.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  if (document.body.classList.contains('tut-intro-mode')) {
+    e.preventDefault();
+    tutorialBegin();
+  } else if (document.body.classList.contains('tutorial')) {
+    e.preventDefault();
+    tutorialNext();
+  }
+});
+
 (function initTheme() {
   let saved = null;
   try { saved = localStorage.getItem('bandits-theme'); } catch(e) {}
